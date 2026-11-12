@@ -263,6 +263,7 @@ async function apiStart(pwd){
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_test_password`,{
       method:"POST",
+      cache:"no-store", // ←新增这一行
       headers:{
         "apikey": SUPABASE_ANON_KEY,
         "Content-Type":"application/json"
