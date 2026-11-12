@@ -19,7 +19,9 @@ h1{font-family:"Songti SC","STSong",SimSun,serif;font-size:30px;text-align:cente
 .input:focus{outline:none;border-color:#2B2B2B}
 .btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;background:#2B2B2B;color:#F7F4EE;font-size:16px;cursor:pointer;margin-top:14px}
 .btn:active{opacity:.85}
+.btn:disabled{background:#aaaaaa;cursor:not-allowed;opacity:0.75}
 .btn.ghost{background:transparent;color:#2B2B2B;border:1px solid #2B2B2B}
+.btn.ghost:disabled{border-color:#aaa;color:#aaa}
 .btn.small{padding:10px;font-size:14px}
 .err{color:#c0392b;font-size:13px;text-align:center;margin-top:10px;min-height:18px}
 .hint{font-size:12px;color:#9a917f;text-align:center;margin-top:12px;line-height:20px}
@@ -255,6 +257,8 @@ function save(key,val){localStorage.setItem(key,JSON.stringify(val))}
 
 /* ============ 密码校验：调用Supabase RPC ============ */
 let currentPwd=null;
+let isRequesting=false;
+
 async function apiStart(pwd){
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_test_password`,{
@@ -268,33 +272,63 @@ async function apiStart(pwd){
     const data = await res.json();
     return data;
   }catch(e){
+    console.error(e);
     return {ok:false,error:'network'};
   }
 }
 
 $('btnGate').onclick=async ()=>{
+  if(isRequesting) return;
   const pwd=$('pwd').value.trim();
   if(!pwd){$('pwdErr').textContent='请输入测试密码';return}
-  $('btnGate').disabled=true;$('btnGate').textContent='验证中…';$('pwdErr').textContent='';
+
+  isRequesting=true;
+  $('btnGate').disabled=true;
+  $('btnGate').textContent='验证中…';
+  $('pwdErr').textContent='';
+
   const ret=await apiStart(pwd);
-  $('btnGate').disabled=false;$('btnGate').textContent='开始测试';
+
+  isRequesting=false;
+  $('btnGate').disabled=false;
+  $('btnGate').textContent='开始测试';
+
   if(!ret.ok){
-    if(ret.error==='invalid')$('pwdErr').textContent='密码不正确，请重试';
-    else if(ret.error==='exhausted')$('pwdErr').textContent='该密码的测试机会已用完';
-    else $('pwdErr').textContent='网络异常，请稍后重试';
+    if(ret.error==='invalid'){
+      $('pwdErr').textContent='密码不正确，请重试';
+    }else if(ret.error==='exhausted'){
+      $('pwdErr').textContent='该密码的测试机会已用完';
+      $('btnGate').disabled=true;
+    }else{
+      $('pwdErr').textContent='网络异常，请稍后重试';
+    }
     return;
   }
   currentPwd=pwd;
+  $('pwdHint').textContent=`验证通过，本密码剩余 ${ret.left} 次测试机会`;
+
   const prog=load('cpt_progress',null);
   if(prog && prog.answers.some(a=>a!==null) && prog.answers.some(a=>a===null)){
-    if(confirm('检测到你上次未完成的答题进度，是否继续？')){cur=prog.cur;answers=prog.answers;renderQ();show('s-quiz');return}
+    if(confirm('检测到你上次未完成的答题进度，是否继续？')){
+      cur=prog.cur;answers=prog.answers;renderQ();show('s-quiz');
+      return;
+    }
   }
   cur=0;answers=Array(QUESTIONS.length).fill(null);
   save('cpt_progress',{cur,answers});
-  renderQ();show('s-quiz');
-  $('pwdHint').textContent=`验证通过，本密码剩余 ${ret.left} 次测试机会`;
+  renderQ();
+  show('s-quiz');
 };
+
+//输入框输入时清空错误，恢复按钮
+$('pwd').addEventListener('input',()=>{
+  $('pwdErr').textContent='';
+  $('btnGate').disabled=false;
+  $('pwdHint').textContent='每个密码可测试 3 次';
+});
+
 $('pwd').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnGate').click()});
+
 /* ============ 答题 ============ */
 let cur=0, answers=Array(QUESTIONS.length).fill(null);
 function renderQ(){
@@ -360,7 +394,14 @@ function showResult(code,fromShare){
   show('s-result');
   $('btnPoster').onclick=()=>openPoster(code);
   $('btnCopy').onclick=()=>copyLink(code);
-  $('btnAgain').onclick=()=>{location.hash='';show('s-gate');$('pwd').value='';$('pwdErr').textContent='';$('pwdHint').textContent=`每个密码可测试 ${MAX_USES} 次`};
+  $('btnAgain').onclick=()=>{
+    location.hash='';
+    show('s-gate');
+    $('pwd').value='';
+    $('pwdErr').textContent='';
+    $('pwdHint').textContent=`每个密码可测试 ${MAX_USES} 次`;
+    $('btnGate').disabled=false;
+  };
 }
 function copyLink(code){
   const url=location.origin+location.pathname+'#r='+code;
@@ -372,6 +413,7 @@ function copyLink(code){
     document.body.removeChild(ta);
   }
 }
+
 /* ============ 海报生成（Canvas 合成 1242×1656） ============ */
 function wrapLines(ctx,text,maxW){
   const lines=[];let line='';
