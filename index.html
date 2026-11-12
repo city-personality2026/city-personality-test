@@ -263,7 +263,7 @@ async function apiStart(pwd){
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_test_password`,{
       method:"POST",
-      cache:"no-store", // ←新增这一行
+      cache:"no-store",
       headers:{
         "apikey": SUPABASE_ANON_KEY,
         "Content-Type":"application/json"
@@ -277,6 +277,7 @@ async function apiStart(pwd){
     return {ok:false,error:'network'};
   }
 }
+
 
 $('btnGate').onclick=async ()=>{
   if(isRequesting) return;
