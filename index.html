@@ -678,7 +678,9 @@ function getTier(score){
   else return "M";
 }
 
+// =========【重点修复：维度累加BUG，重新写computeCode】=========
 function computeCode(localAnswers){
+  // 每次调用强制全新初始化，修复累加失效
   const dimScore = [0,0,0,0];
   console.log("【DEBUG】完整答卷数组：", localAnswers);
   for(let i=0;i<QUESTIONS.length;i++){
@@ -689,10 +691,11 @@ function computeCode(localAnswers){
     else if(ans === "B") scoreAdd = q.sb;
     else if(ans === "C") scoreAdd = q.sc;
     else if(ans === "D") scoreAdd = q.sd;
-    console.log(`第${i+1}题 ans=${ans} scoreAdd=${scoreAdd}`);
-    const dimIndex = q.d;
+    console.log(`第${i+1}题 ans=${ans} scoreAdd=${scoreAdd} 维度${q.d}`);
+    const dimIndex = Number(q.d);
     if(dimIndex >=0 && dimIndex <=3){
-      dimScore[dimIndex] += scoreAdd;
+      dimScore[dimIndex] = dimScore[dimIndex] + scoreAdd;
+      console.log(` >> 维度${dimIndex} 现在分数：${dimScore[dimIndex]}`);
     }
   }
   console.log("【DEBUG】各维度分数：", dimScore);
