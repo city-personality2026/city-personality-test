@@ -71,7 +71,7 @@ ul.guide li{font-size:14px;line-height:26px;color:#4a453c}
       <input class="input" id="pwd" type="password" placeholder="输入测试密码" autocomplete="off">
       <div class="err" id="pwdErr"></div>
       <button class="btn" id="btnGate">开始测试</button>
-      <div class="hint" id="pwdHint">每个密码可测试 3 次<br><small>⚠️本页面需要网页服务器部署，本地直接打开会网络报错</small></div>
+      <div class="hint" id="pwdHint"></div>
     </div>
     <div class="foot">本测试为娱乐向轻测评，结果不构成心理学诊断或职业建议</div>
   </div>
@@ -301,9 +301,14 @@ score > 6      → P 正向
 -6 ≤ score ≤6  → M 均衡中间
 score < -6     → N 负向
 全B每题+1，6题总和=6 → M；全C每题‑1总和‑6 → M；全A=18→P；全D=‑18→N
+
+【方案A改动】
+长沙：PMMN → PPMN (节奏P，社交P，风险M，价值N)
+珠海：PMPM → NMPM (节奏N，社交M，风险P，价值M)
+济南：MPPP → MPMP (节奏M，社交P，风险M，价值P)
+旧编码 PMMN / PMPM / MPPP 删除，命中会走兜底_default
 */
 const RESULTS = {
-// ========= 原版标杆16城 =========
 "PPPP":{city:"深圳",title:"湾区永动机",col:"#0B5FFF",cname:"科创蓝",
 q:"「不是我卷，是深圳的风太大，站住就要用力。」",
 x:"成就动机驱动的你，多巴胺来自「达成」本身，闲下来反而焦虑。你的时间、金钱与自我价值高度绑定。",
@@ -416,7 +421,6 @@ hi:"情绪稳定，洞察力",bug:"社交需求过低，容易和世界失联",m
 gold:"慢慢来，山高路远。",
 guide:["每季主动链接一次老朋友","把洞察说出来，别只放在心里","偶尔也下山看看"]},
 
-// ========= 中间态M大量新增中间人格城市 =========
 "PMMP":{city:"苏州",title:"园林调和者",col:"#3D6B5E",cname:"园林青",
 q:"「进取但不焦灼，热闹却保有分寸。」",
 x:"节奏较快，社交处于均衡状态；闯劲适中，务实为本，懂得在奋斗与生活之间找平衡点。",
@@ -429,24 +433,28 @@ x:"行动力不错，社交、冒险、价值观念全部处于均衡位置，�
 hi:"适应性强，务实通透",bug:"缺少鲜明棱角",match:"最搭 无锡型",
 gold:"不疾不徐，行稳致远。",
 guide:["敢于偶尔跳出舒适圈"]},
-"PMMN":{city:"长沙",title:"星城平衡派",col:"#E63E2E",cname:"辣椒红",
+
+"PPMN":{city:"长沙",title:"星城平衡派",col:"#E63E2E",cname:"辣椒红",
 q:"谋生与欢愉，二者皆可兼得。",
-x:"节奏快，社交均衡，求稳，现实与精神体验对半。",
-hi:"热爱生活，懂分寸",bug:"容易摇摆不定",match:"最搭 重庆型",
+x:"节奏明快，热爱热闹烟火；闯劲适度，现实物质与精神体验对半，懂享受生活，快意鲜活。",
+hi:"热爱生活，懂分寸，共情力强",bug:"容易摇摆不定，冲动消费",match:"最搭 重庆型",
 gold:"人间烟火，自得其乐。",
-guide:["确立自己的核心优先级"]},
-"PMPM":{city:"珠海",title:"滨海舒展派",col:"#2FA3A0",cname:"海岛青",
+guide:["确立自己的核心优先级","设置冲动消费上限"]},
+
+"NMPM":{city:"珠海",title:"滨海舒展派",col:"#2FA3A0",cname:"海岛青",
 q:"保持向前脚步，也不辜负眼前海风。",
-x:"节奏快，社交内向均衡，敢于尝试，物质与体验均衡。",
-hi:"浪漫又清醒",bug:"容易动力不足",match:"最搭 厦门型",
+x:"节奏松弛舒缓，社交内向均衡；愿意拥抱新鲜机遇，物质与精神体验保持均衡，临海城市的浪漫清醒。",
+hi:"浪漫又清醒，心态开放",bug:"容易动力不足，现实规划偏弱",match:"最搭 厦门型",
 gold:"步履不停，心向山海。",
 guide:["设立阶段性现实目标"]},
-"MPPP":{city:"济南",title:"齐鲁温行者",col:"#D98E32",cname:"早茶琥珀",
+
+"MPMP":{city:"济南",title:"齐鲁温行者",col:"#D98E32",cname:"早茶琥珀",
 q:"「不必疾行，但本心始终滚烫。」",
-x:"生活节奏均衡，热爱社交，敢于闯荡，看重现实成就。",
-hi:"热忱宽厚，有韧劲",bug:"容易心软妥协",match:"最搭 北京型",
+x:"生活节奏均衡，待人热忱外向；行事稳重有度，不刻意激进冒险，看重现实踏实收获，宽厚有韧劲。",
+hi:"热忱宽厚，有韧劲，重情义",bug:"容易心软妥协，不懂拒绝",match:"最搭 北京型",
 gold:"温而不弱，行而不躁。",
 guide:["学会坚定拒绝他人"]},
+
 "MPMM":{city:"徐州",title:"淮海稳进者",col:"#C9A96A",cname:"香槟金",
 q:"张弛有度，烟火与理想并行。",
 x:"节奏中等，外向社交均衡，闯劲均衡，现实体验兼顾。",
@@ -483,7 +491,6 @@ x:"节奏中等，社交内向，偏保守安稳，现实回报优先。",
 hi:"平衡有度，踏实生活",bug:"冲劲不足",match:"最搭 青岛型",
 gold:"踏实过日子，不忘看风景。",
 guide:["勇敢追求更高目标"]},
-//兜底：任意未定义编码使用通用中间人格，防止报错
 "_default":{city:"山水中间型人格",title:"多元调和者",col:"#777777",cname:"中性灰",
 q:"「你的选择混合多元，没有走向极端。」",
 x:"你在各个特质之间处于中间地带，不偏向任何一端，兼容不同的生活方式，拥有很强的可塑性。",
@@ -508,6 +515,13 @@ let toastTimer=null;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);}
 function load(key,def){try{return JSON.parse(localStorage.getItem(key))??def}catch(e){console.error('load',e);return def}}
 function save(key,val){try{localStorage.setItem(key,JSON.stringify(val))}catch(e){console.error('save',e);}}
+
+/* ============ 重置全局状态函数【关键！！！】 ============ */
+function resetTestState(){
+  cur = 0;
+  answers = Array(QUESTIONS.length).fill(null);
+  save('cpt_progress', {cur, answers});
+}
 
 /* ============ 密码校验：调用Supabase REST API ============ */
 let currentPwd=null;
@@ -548,6 +562,9 @@ async function apiStart(pwd){
     return {ok:false,error:"network"};
   }
 }
+//页面初始化hint用innerHTML，修复标签原样输出bug
+$('pwdHint').innerHTML=`每个密码可测试 ${MAX_USES} 次<br><small>⚠️本页面需要网页服务器部署，本地直接打开会网络报错</small>`;
+
 $('btnGate').onclick=async ()=>{
   if(isRequesting) return;
   const pwd=$('pwd').value.trim();
@@ -579,24 +596,22 @@ $('btnGate').onclick=async ()=>{
     return;
   }
   currentPwd=pwd;
-  $('pwdHint').textContent=`验证通过，本密码剩余 ${ret.left} 次测试机会`;
+  $('pwdHint').innerHTML=`验证通过，本密码剩余 ${ret.left} 次测试机会`;
   toast("密码校验成功");
-  // 【修复】每次进答题页强制重置全局变量
-  cur=0;
-  answers=Array(QUESTIONS.length).fill(null);
-  save('cpt_progress',{cur,answers});
+  resetTestState();
   renderQ();
   show('s-quiz');
 };
 $('pwd').addEventListener('input',()=>{
   $('pwdErr').textContent='';
   $('btnGate').disabled=false;
-  $('pwdHint').textContent='每个密码可测试 3 次<br><small>⚠️本页面需要网页服务器部署，本地直接打开会网络报错</small>';
+  $('pwdHint').innerHTML=`每个密码可测试 ${MAX_USES} 次<br><small>⚠️本页面需要网页服务器部署，本地直接打开会网络报错</small>`;
 });
 $('pwd').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnGate').click()});
 
 /* ============ 四选项答题逻辑 ============ */
 let cur=0, answers=Array(QUESTIONS.length).fill(null);
+
 function renderQ(){
   console.log('renderQ运行，当前题号：', cur);
   try{
@@ -654,7 +669,6 @@ function getTier(score){
 }
 
 function computeCode(){
-  //【修复】每次计算，强制清零分数数组，杜绝历史叠加！
   const dimScore = [0,0,0,0];
   for(let i=0;i<QUESTIONS.length;i++){
     const q = QUESTIONS[i];
@@ -680,10 +694,7 @@ function computeCode(){
 
 function finish(){
   const code = computeCode();
-  //【修复】做完测试清空答案，写入localStorage，防止残留
-  cur=0;
-  answers=Array(QUESTIONS.length).fill(null);
-  save('cpt_progress',{cur,answers});
+  resetTestState();
   location.hash='r='+code;
   showResult(code,false);
 }
@@ -727,15 +738,12 @@ function showResult(code,fromShare){
   $('btnPoster').onclick=()=>openPoster(code);
   $('btnCopy').onclick=()=>copyLink(code);
   $('btnAgain').onclick=()=>{
-    //【修复】点击"我也测测"，强制重置全局状态，彻底清除旧答案残留
-    cur=0;
-    answers=Array(QUESTIONS.length).fill(null);
-    save('cpt_progress',{cur,answers});
+    resetTestState();
     location.hash='';
     show('s-gate');
     $('pwd').value='';
     $('pwdErr').textContent='';
-    $('pwdHint').textContent=`每个密码可测试 ${MAX_USES} 次<br><small>⚠️本页面需要网页服务器部署，本地直接打开会网络报错</small>`;
+    $('pwdHint').innerHTML=`每个密码可测试 ${MAX_USES} 次<br><small>⚠️本页面需要网页服务器部署，本地直接打开会网络报错</small>`;
     $('btnGate').disabled=false;
   };
 }
@@ -746,7 +754,7 @@ function copyLink(code){
     navigator.clipboard.writeText(url).then(()=>toast('结果链接已复制，快去分享吧'));
   }else{
     const ta=document.createElement('textarea');ta.value=url;document.body.appendChild(ta);ta.select();
-    try{document.execCommand('copy');toast('结果链接已复制')}catch(e){toast('复制失败，请手动复制地址栏链接')}
+    try{document.execCommand('copy');toast('复制成功')}catch(e){toast('复制失败，请手动复制地址栏链接')}
     document.body.removeChild(ta);
   }
 }
