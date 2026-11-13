@@ -301,12 +301,6 @@ score > 6      → P 正向
 -6 ≤ score ≤6  → M 均衡中间
 score < -6     → N 负向
 全B每题+1，6题总和=6 → M；全C每题‑1总和‑6 → M；全A=18→P；全D=‑18→N
-
-【方案A改动】
-长沙：PMMN → PPMN (节奏P，社交P，风险M，价值N)
-珠海：PMPM → NMPM (节奏N，社交M，风险P，价值M)
-济南：MPPP → MPMP (节奏M，社交P，风险M，价值P)
-旧编码 PMMN / PMPM / MPPP 删除，命中会走兜底_default
 */
 const RESULTS = {
 "PPPP":{city:"深圳",title:"湾区永动机",col:"#0B5FFF",cname:"科创蓝",
@@ -461,36 +455,42 @@ x:"节奏中等，外向社交均衡，闯劲均衡，现实体验兼顾。",
 hi:"踏实靠谱，兼容度高",bug:"节奏偏慢",match:"最搭 无锡型",
 gold:"稳中求进，自在从容。",
 guide:["适当提高行动速度"]},
+
 "MMMM":{city:"无锡",title:"江南均衡者",col:"#C9A96A",cname:"香槟金",
 q:"「不过分激进，也拒绝彻底躺平。」",
-x:"**全B、全C答题典型人格**，全部维度落在中间均衡。做事有冲劲但不急躁，社交有度，冒险适度，物质精神双向兼顾。成熟温和，适应性极强。【全B/全C】",
+x:"各项特质均衡居中，做事有冲劲但不急躁，社交有度，冒险适度，物质与精神需求双向兼顾。成熟温和，适应性极强，不喜欢走向极端。",
 hi:"分寸感极佳，成熟克制",bug:"容易顾虑太多",match:"最搭 宁波型",
 gold:"进退有度，冷暖自知。",
 guide:["偶尔放下顾虑大胆抉择"]},
+
 "MMNN":{city:"洛阳",title:"洛水安闲者",col:"#D4A017",cname:"醒狮金",
 q:"「时光缓缓，于平淡之中寻浪漫。」",
-x:"节奏中等，社交偏弱均衡，偏向守成，更看重精神感受。【全C典型人格】",
+x:"节奏中等，社交偏弱均衡，偏向守成，更看重精神感受。",
 hi:"温和从容，内心丰盈",bug:"缺少冲劲",match:"最搭 大理型",
 gold:"安稳度日，自有浪漫。",
 guide:["给自己设立适度挑战目标"]},
+
 "NMNN":{city:"凤凰",title:"边城闲居者",col:"#5B7C99",cname:"苍山黛",
 q:"「远离喧嚣，守好属于自己的小世界。」",
 x:"节奏偏慢，社交少，求稳，以精神体验为主。",
 hi:"内心宁静，不喜纷争",bug:"容易隔绝外界",match:"最搭 丽江型",
 gold:"心有归处，即是故乡。",
 guide:["适度向外链接世界"]},
+
 "NNMN":{city:"威海",title:"海隅淡然者",col:"#5B7C99",cname:"苍山黛",
 q:"海风漫过，简单即是幸福。",
 x:"慢节奏，独处居多，冒险中间态，偏向精神体验。",
 hi:"松弛简单，与世无争",bug:"动力不足",match:"最搭 烟台型",
 gold:"简单生活，自有诗意。",
 guide:["给自己一点向上的动力"]},
+
 "MMNP":{city:"烟台",title:"海岸调和者",col:"#5C8A3A",cname:"山茶绿",
 q:"谋生谋生，感受亦不可辜负。",
 x:"节奏中等，社交内向，偏保守安稳，现实回报优先。",
 hi:"平衡有度，踏实生活",bug:"冲劲不足",match:"最搭 青岛型",
 gold:"踏实过日子，不忘看风景。",
 guide:["勇敢追求更高目标"]},
+
 "_default":{city:"山水中间型人格",title:"多元调和者",col:"#777777",cname:"中性灰",
 q:"「你的选择混合多元，没有走向极端。」",
 x:"你在各个特质之间处于中间地带，不偏向任何一端，兼容不同的生活方式，拥有很强的可塑性。",
@@ -611,7 +611,6 @@ $('pwd').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnGate').click()}
 
 /* ============ 四选项答题逻辑 ============ */
 let cur=0, answers=Array(QUESTIONS.length).fill(null);
-
 function renderQ(){
   console.log('renderQ运行，当前题号：', cur);
   try{
@@ -668,11 +667,12 @@ function getTier(score){
   else return "M";
 }
 
-function computeCode(){
+// 接收一份answers副本，不依赖全局变量，彻底规避重置时序BUG
+function computeCode(localAnswers){
   const dimScore = [0,0,0,0];
   for(let i=0;i<QUESTIONS.length;i++){
     const q = QUESTIONS[i];
-    const ans = answers[i];
+    const ans = localAnswers[i];
     let scoreAdd = 0;
     if(ans === "A") scoreAdd = q.sa;
     else if(ans === "B") scoreAdd = q.sb;
@@ -693,7 +693,9 @@ function computeCode(){
 }
 
 function finish(){
-  const code = computeCode();
+  // 复制当前答卷，先算编码，再重置状态，修复时序BUG
+  const localAnswersCopy = [...answers];
+  const code = computeCode(localAnswersCopy);
   resetTestState();
   location.hash='r='+code;
   showResult(code,false);
