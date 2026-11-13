@@ -296,11 +296,10 @@ sa:3,sb:1,sc:-1,sd:-3}
 ];
 
 /*
-修改后阈值：
+阈值：
 score > 6      → P 正向
 -6 ≤ score ≤6  → M 均衡中间
 score < -6     → N 负向
-4维度拼接4字符，例如 P M M N
 全B每题+1，6题总和=6 → M；全C每题‑1总和‑6 → M；全A=18→P；全D=‑18→N
 */
 const RESULTS = {
@@ -462,7 +461,7 @@ gold:"进退有度，冷暖自知。",
 guide:["偶尔放下顾虑大胆抉择"]},
 "MMNN":{city:"洛阳",title:"洛水安闲者",col:"#D4A017",cname:"醒狮金",
 q:"「时光缓缓，于平淡之中寻浪漫。」",
-x:"节奏中等，社交偏弱均衡，偏向守成，更看重精神感受。",
+x:"节奏中等，社交偏弱均衡，偏向守成，更看重精神感受。【全C典型人格】",
 hi:"温和从容，内心丰盈",bug:"缺少冲劲",match:"最搭 大理型",
 gold:"安稳度日，自有浪漫。",
 guide:["给自己设立适度挑战目标"]},
@@ -582,7 +581,7 @@ $('btnGate').onclick=async ()=>{
   currentPwd=pwd;
   $('pwdHint').textContent=`验证通过，本密码剩余 ${ret.left} 次测试机会`;
   toast("密码校验成功");
-  localStorage.removeItem('cpt_progress');
+  // 【修复】每次进答题页强制重置全局变量
   cur=0;
   answers=Array(QUESTIONS.length).fill(null);
   save('cpt_progress',{cur,answers});
@@ -647,7 +646,7 @@ $('btnPrev').onclick=()=>{
   }
 };
 
-// ========= 修改后阈值 >6 →P；‑6~6→M；<‑6→N =========
+// ========= 三档转换函数 P/M/N =========
 function getTier(score){
   if(score > 6) return "P";
   else if(score < -6) return "N";
@@ -655,6 +654,7 @@ function getTier(score){
 }
 
 function computeCode(){
+  //【修复】每次计算，强制清零分数数组，杜绝历史叠加！
   const dimScore = [0,0,0,0];
   for(let i=0;i<QUESTIONS.length;i++){
     const q = QUESTIONS[i];
@@ -669,18 +669,21 @@ function computeCode(){
       dimScore[dimIndex] += scoreAdd;
     }
   }
-  console.log("各维度分数：", dimScore);
+  console.log("【DEBUG】各维度分数：", dimScore);
   let code = "";
   for(let d=0;d<4;d++){
     code += getTier(dimScore[d]);
   }
-  console.log("4位三档编码：", code);
+  console.log("【DEBUG】4位编码：", code);
   return code;
 }
 
 function finish(){
   const code = computeCode();
-  save('cpt_progress',{cur:0,answers:Array(QUESTIONS.length).fill(null)});
+  //【修复】做完测试清空答案，写入localStorage，防止残留
+  cur=0;
+  answers=Array(QUESTIONS.length).fill(null);
+  save('cpt_progress',{cur,answers});
   location.hash='r='+code;
   showResult(code,false);
 }
@@ -724,6 +727,10 @@ function showResult(code,fromShare){
   $('btnPoster').onclick=()=>openPoster(code);
   $('btnCopy').onclick=()=>copyLink(code);
   $('btnAgain').onclick=()=>{
+    //【修复】点击"我也测测"，强制重置全局状态，彻底清除旧答案残留
+    cur=0;
+    answers=Array(QUESTIONS.length).fill(null);
+    save('cpt_progress',{cur,answers});
     location.hash='';
     show('s-gate');
     $('pwd').value='';
