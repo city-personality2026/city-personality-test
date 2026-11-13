@@ -189,6 +189,26 @@ const RESULTS = {
 "_default":{city:"山水中间型人格",title:"多元调和者",col:"#777777",cname:"中性灰",q:"「你的选择混合多元，没有走向极端。」",x:"你在各个特质之间处于中间地带，不偏向任何一端，兼容不同的生活方式，拥有很强的可塑性。",hi:"包容，适应性强",bug:"选择容易摇摆",match:"适合多类人格相处",gold:"接纳自我多元，即是最好状态。",guide:["梳理自己内心真正优先级","不必强迫自己走向某一种极端"]}
 };
 
+/* ============ 就近匹配函数：编码找不到时，找汉明距离最小的已有编码 ============ */
+function findNearestResult(targetCode){
+  if(RESULTS[targetCode]) return RESULTS[targetCode];
+  const keys = Object.keys(RESULTS).filter(k=>k.length===4 && k!=='_default');
+  let bestKey = '_default';
+  let minDiff = 999;
+  for(const k of keys){
+    let diff = 0;
+    for(let i=0;i<4;i++){
+      if(k[i] !== targetCode[i]) diff++;
+    }
+    if(diff < minDiff){
+      minDiff = diff;
+      bestKey = k;
+    }
+  }
+  console.log(`编码${targetCode}无配置，就近匹配：${bestKey}`);
+  return RESULTS[bestKey];
+}
+
 /* ============ 工具函数 ============ */
 const $ = id => document.getElementById(id);
 function show(id){
@@ -308,14 +328,14 @@ $('btnSubmit').onclick = function(){
   finish();
 };
 
-// ========= 【重点修复！！！】原始规则：>6 →P；<-6→N；其余M =========
+// ========= 阈值规则：>6 →P；<-6→N；其余M =========
 function getTier(score){
   if(score > 6) return "P";
   else if(score < -6) return "N";
   else return "M";
 }
 
-// 题号i映射维度兜底，规避题目对象d字段损坏
+// 题号i映射维度兜底
 function computeCode(localAnswers){
   const dimScore = [0,0,0,0];
   console.log("【DEBUG】完整答卷数组：", localAnswers);
@@ -353,7 +373,6 @@ function finish(){
   const code = computeCode(localAnswersCopy);
   resetTestState();
   location.hash='r='+code;
-  // 完全走RESULTS查表，输出对应城市
   showResult(code,false);
 }
 
@@ -366,8 +385,8 @@ function tierLabel(ch,i){
 }
 
 function showResult(code,fromShare){
-  // 直接查表，找不到就取_default兜底
-  let r = RESULTS[code] || RESULTS["_default"];
+  // 优先直接查表；不存在则就近匹配相似城市，不再直接跳_default
+  let r = findNearestResult(code);
   const banner=$('friendBanner');
   if(fromShare){banner.style.display='block';banner.innerHTML=`你的朋友是【${r.city}型 · ${r.title||""}】<br>测测你是哪座城？`;}else banner.style.display='none';
   $('rCard').innerHTML=`
@@ -434,7 +453,7 @@ function wrapLinesFixed(ctx,text,maxW){
 }
 
 function drawPoster(code){
-  let r = RESULTS[code] || RESULTS["_default"];
+  let r = findNearestResult(code);
   const cv=$('posterCanvas'),ctx=cv.getContext('2d');
   const W=1242,H=1656,M=96;
   ctx.fillStyle='#F7F4EE';ctx.fillRect(0,0,W,H);
