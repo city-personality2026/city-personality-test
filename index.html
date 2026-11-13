@@ -71,11 +71,11 @@ ul.guide li{font-size:14px;line-height:26px;color:#4a453c}
       <input class="input" id="pwd" type="password" placeholder="输入测试密码" autocomplete="off">
       <div class="err" id="pwdErr"></div>
       <button class="btn" id="btnGate">开始测试</button>
-      <div class="hint" id="pwdHint">每个密码可测试 3 次</div>
+      <div class="hint" id="pwdHint">每个密码可测试 3 次<br><small>⚠️本页面需要部署网页服务器，本地直接打开会网络报错</small></div>
     </div>
     <div class="foot">本测试为娱乐向轻测评，结果不构成心理学诊断或职业建议</div>
   </div>
-  <!-- 答题 四选项版本【原版UI完全保留】 -->
+  <!-- 答题 四选项版本 -->
   <div class="screen" id="s-quiz">
     <div class="brand">你的性格最像哪座城？</div>
     <div class="bar"><div id="barFill" style="width:0%"></div></div>
@@ -718,7 +718,7 @@ let toastTimer=null;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);}
 function load(key,def){try{return JSON.parse(localStorage.getItem(key))??def}catch(e){console.error('load',e);return def}}
 function save(key,val){try{localStorage.setItem(key,JSON.stringify(val))}catch(e){console.error('save',e);}}
-/* ============ 密码校验：直接调用Supabase REST API ============ */
+/* ============ 密码校验：调用Supabase REST API ============ */
 let currentPwd=null;
 let isRequesting=false;
 async function apiStart(pwd){
@@ -753,7 +753,7 @@ async function apiStart(pwd){
     const left = row.max_uses - newUsed;
     return {ok:true, left};
   }catch(e){
-    console.error(e);
+    console.error("网络异常捕获：",e);
     return {ok:false,error:"network"};
   }
 }
@@ -781,9 +781,9 @@ $('btnGate').onclick=async ()=>{
       $('pwdErr').textContent='该密码的测试机会已用完';
       toast('该密码的测试机会已用完');
       $('btnGate').disabled=true;
-    }else{
-      $('pwdErr').textContent='网络异常，请稍后重试';
-      toast('网络异常，请稍后重试');
+    }else if(ret.error==='network'){
+      $('pwdErr').textContent='网络请求失败！不能本地双击打开，需要网页服务器部署';
+      toast('网络请求失败！不能本地双击打开，需要网页服务器部署');
     }
     return;
   }
@@ -800,16 +800,15 @@ $('btnGate').onclick=async ()=>{
 $('pwd').addEventListener('input',()=>{
   $('pwdErr').textContent='';
   $('btnGate').disabled=false;
-  $('pwdHint').textContent='每个密码可测试 3 次';
+  $('pwdHint').textContent='每个密码可测试 3 次<br><small>⚠️本页面需要部署网页服务器，本地直接打开会网络报错</small>';
 });
 $('pwd').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnGate').click()});
-/* ============ 四选项答题逻辑【原版UI完整保留，四态标记 + = ~ -】 ============ */
+/* ============ 四选项答题逻辑 ============ */
 let cur=0, answers=Array(QUESTIONS.length).fill(null);
 function renderQ(){
   console.log('renderQ运行，当前题号：', cur);
   try{
     const q=QUESTIONS[cur];
-    console.log('当前题目对象', q);
     $('qNum').textContent=`${cur+1} / ${QUESTIONS.length}`;
     const dim = DIMS[q.d] ?? DIMS[0];
     $('dimName').textContent=dim.name;
@@ -950,7 +949,7 @@ function showResult(code,fromShare){
     show('s-gate');
     $('pwd').value='';
     $('pwdErr').textContent='';
-    $('pwdHint').textContent=`每个密码可测试 ${MAX_USES} 次`;
+    $('pwdHint').textContent=`每个密码可测试 ${MAX_USES} 次<br><small>⚠️本页面需要部署网页服务器，本地直接打开会网络报错</small>`;
     $('btnGate').disabled=false;
   };
 }
@@ -966,7 +965,7 @@ function copyLink(code){
   }
 }
 
-/* ============ 海报生成【完整修复】 ============ */
+/* ============ 海报完整逻辑 ============ */
 function openPoster(code){
   $('posterModal').classList.add('on');
   drawPoster(code);
@@ -1020,4 +1019,11 @@ function drawPoster(code){
   ctx.fillText(r.title||"",M,404);
   ctx.strokeStyle=r.col;ctx.lineWidth=3;
   ctx.beginPath();ctx.arc(W-M-90,300,86,0,Math.PI*2);ctx.stroke();
-  ctx.beginPath();ctx.arc(W-M-90,300,64,0,Math.PI*2);ctx.st
+  ctx.beginPath();ctx.arc(W-M-90,300,64,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle=r.col;ctx.font=`500 60px ${SERIF}`;
+  ctx.textAlign='center';ctx.fillText(r.city[0],W-M-90,322);
+  ctx.textAlign='left';
+  let cx=M;
+  ctx.font=`26px ${SANS}`;
+  const chipLab = [...code].map((ch,i)=>{
+    if(ch==="+") return DIMS[i].poles[0]+"
