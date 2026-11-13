@@ -1,3 +1,4 @@
+<!--v20261112‑cdnfix-->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -29,7 +30,7 @@ h1{font-family:"Songti SC","STSong",SimSun,serif;font-size:30px;text-align:cente
 .bar>div{height:100%;background:#2B2B2B;transition:width .3s}
 .qmeta{display:flex;justify-content:space-between;font-size:12px;color:#9a917f;margin-bottom:16px}
 .qtext{font-size:18px;font-weight:600;line-height:28px;margin-bottom:18px}
-.opt{display:block;width:100%;text-align:left;padding:14px;border:1px solid #d9d2c0;border-radius:12px;background:#fff;font-size:15px;line-height:22px;margin-bottom:10px;cursor:pointer;color:#2B2B2B;transition:all .15s}
+.opt{display:block;width:100%;text-align:left;padding:16px;border:1px solid #d9d2c0;border-radius:12px;background:#fff;font-size:15px;line-height:23px;margin-bottom:12px;cursor:pointer;color:#2B2B2B;transition:all .15s}
 .opt:hover{border-color:#2B2B2B}
 .opt.sel{background:#2B2B2B;color:#F7F4EE;border-color:#2B2B2B}
 .rowbtns{display:flex;gap:10px;margin-top:8px}
@@ -66,16 +67,16 @@ ul.guide li{font-size:14px;line-height:26px;color:#4a453c}
   <div class="screen on" id="s-gate">
     <div class="brand">CITY PERSONALITY TEST</div>
     <h1>你的性格最像哪座城？</h1>
-    <p class="sub">多维度城市人格 · 24道题 · 约4分钟</p>
+    <p class="sub">16种城市人格 · 24道题 · 约4分钟</p>
     <div class="card">
       <input class="input" id="pwd" type="password" placeholder="输入测试密码" autocomplete="off">
       <div class="err" id="pwdErr"></div>
       <button class="btn" id="btnGate">开始测试</button>
-      <div class="hint" id="pwdHint">每个密码可测试 3 次<br><small>⚠️本页面需要部署网页服务器，本地直接打开会网络报错</small></div>
+      <div class="hint" id="pwdHint">每个密码可测试 3 次</div>
     </div>
     <div class="foot">本测试为娱乐向轻测评，结果不构成心理学诊断或职业建议</div>
   </div>
-  <!-- 答题 四选项版本 -->
+  <!-- 答题 -->
   <div class="screen" id="s-quiz">
     <div class="brand">你的性格最像哪座城？</div>
     <div class="bar"><div id="barFill" style="width:0%"></div></div>
@@ -83,8 +84,6 @@ ul.guide li{font-size:14px;line-height:26px;color:#4a453c}
     <div class="qtext" id="qText"></div>
     <button class="opt" id="optA"></button>
     <button class="opt" id="optB"></button>
-    <button class="opt" id="optC"></button>
-    <button class="opt" id="optD"></button>
     <div class="rowbtns">
       <button class="btn ghost" id="btnPrev">上一题</button>
     </div>
@@ -112,835 +111,288 @@ ul.guide li{font-size:14px;line-height:26px;color:#4a453c}
 </div>
 <div class="toast" id="toast"></div>
 <script>
-document.addEventListener('DOMContentLoaded', async function(){
 // ========= Supabase配置 =========
 const SUPABASE_URL = "https://wxxcnsgxggeyaqgmqkly.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_UHx7NMnBM1U82bNyq9g8cw_jpoO2-Mq";
 const MAX_USES = 3;
-/* ============ 维度 ============ */
+
+/* ============ 维度与题目 ============ */
 const DIMS = [
   {name:'生活节奏', poles:['疾风','慢煮']},
   {name:'社交能量', poles:['烟火','独酌']},
   {name:'风险偏好', poles:['闯荡','守成']},
   {name:'价值排序', poles:['罗盘','诗歌']}
 ];
-/* ============ 24道题目 四选项版本 sa/sb/sc/sd 分值 A:+3 B:+1 C:-1 D:-3 ============ */
 const QUESTIONS = [
-// ========== D0 生活节奏｜+疾风快｜=均衡节奏｜~偏松弛｜−慢煮松弛 ==========
-{d:0,q:'周末来临，你的内心更倾向于？',
-a:'立刻安排满满当当的计划，充分利用时间',
-b:'安排几件重要事，尽量把时间利用起来',
-c:'做一两件事即可，不用把自己排太满',
-d:'什么计划都不想做，随心闲散度过',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:0,q:'手上堆积多项任务，你会？',
-a:'抓紧全部做完，越快结束越好',
-b:'按顺序推进，尽量赶完进度',
-c:'慢慢来，允许适当拖延一点',
-d:'不着急，想什么时候做就什么时候做',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:0,q:'等待排队的时候你的状态？',
-a:'内心急躁，希望流程越快越好',
-b:'有点着急，但可以克制自己',
-c:'心态平和，刷刷手机打发时间',
-d:'享受放空，并不在意耗费多久',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:0,q:'空闲傍晚，你更愿意？',
-a:'继续处理未完成的事务',
-b:'简单收拾，做点有用的小事',
-c:'随便放松歇一会',
-d:'彻底放空，慢悠悠享受夜晚',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:0,q:'面对新事物、新店、新工具？',
-a:'第一时间体验，抢先尝试',
-b:'感兴趣会尽快试一试',
-c:'观望一阵，不急着上手',
-d:'不追逐新潮，习惯旧有节奏',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:0,q:'一天时间被打乱，你的感受？',
-a:'很不舒服，节奏被破坏很难受',
-b:'有点介意，尽量拉回正轨',
-c:'可以接受，适度变通就好',
-d:'无所谓，打乱也正好松弛下来',
-sa:3,sb:1,sc:-1,sd:-3},
-
-// ========== D1 社交能量｜+烟火外向｜=适度社交｜~偏内向｜−独酌内向 ==========
-{d:1,q:'朋友邀约热闹聚会，你的想法？',
-a:'很期待，积极参与乐于热闹',
-b:'愿意去，可以享受氛围',
-c:'勉强参加，期待早点结束',
-d:'尽量推脱，更想自己待着',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:1,q:'结束一场大型社交之后？',
-a:'意犹未尽，还想继续玩',
-b:'还算开心，略有疲惫',
-c:'只想早点回家恢复精力',
-d:'精力耗尽，迫切需要独处回血',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:1,q:'遇到熟人在街上偶遇？',
-a:'热情停下，畅聊一番',
-b:'主动寒暄简单聊几句',
-c:'点头打个招呼即可',
-d:'希望简单避开，减少交谈',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:1,q:'认识新朋友，你通常？',
-a:'主动开启话题，快速熟络',
-b:'在集体中自然认识他人',
-c:'需要很久才能放开自己',
-d:'更喜欢一对一安静浅交，不喜广交朋友',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:1,q:'闲暇的夜晚，你偏向？',
-a:'约朋友出门聚会玩耍',
-b:'偶尔和朋友小聚',
-c:'少社交，大多自己消遣',
-d:'几乎不社交，享受一个人的时光',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:1,q:'搬到新环境，邻里之间？',
-a:'主动认识，打成一片',
-b:'见面友好打个招呼',
-c:'维持最低限度礼貌即可',
-d:'不希望和邻居产生过多往来',
-sa:3,sb:1,sc:-1,sd:-3},
-
-// ========== D2 风险偏好｜+闯荡求变｜=稳中求进｜~偏保守｜−守成安稳 ==========
-{d:2,q:'当前处境让你压抑，你会？',
-a:'果断做出改变，不怕未知',
-b:'伺机而动，主动寻找转机',
-c:'忍耐观望，不轻易变动',
-d:'尽量维持现状，不愿冒险改变',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:2,q:'面对一笔资金，你倾向？',
-a:'愿意高风险博取更高收益',
-b:'小部分资金用来冒险尝试',
-c:'以稳妥为主，少量尝试风险',
-d:'优先绝对安全，拒绝冒险',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:2,q:'计划一次陌生旅行？',
-a:'少做攻略，随遇而安探索',
-b:'定大方向，细节临场决定',
-c:'做部分攻略，保留一点弹性',
-d:'详细规划每一步，不接受意外',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:2,q:'看到一个前景不确定的机会？',
-a:'抓住机会，大胆试一试',
-b:'简单评估就愿意尝试',
-c:'多方搜集信息谨慎观望',
-d:'观望很久，不轻易出手',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:2,q:'做重要抉择，你更相信？',
-a:'敢于赌一把，拥抱风险',
-b:'可以冒险，但留好退路',
-c:'尽量规避不必要风险',
-d:'风险本身就意味着危险',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:2,q:'接触新领域新游戏新项目？',
-a:'热衷于开荒探索未知',
-b:'乐于体验新鲜内容',
-c:'更偏向熟悉的内容',
-d:'固守熟悉的，不爱折腾',
-sa:3,sb:1,sc:-1,sd:-3},
-
-// ========== D3 价值排序｜+罗盘务实｜=均衡兼顾｜~偏体验｜−诗歌体验 ==========
-{d:3,q:'意外拿到一笔奖金，你优先？',
-a:'储蓄投资，提升现实物质',
-b:'大部分存下，少量享受生活',
-c:'一半储蓄，一半用来体验',
-d:'优先用来换取美好体验感受',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:3,q:'花钱消费，你首要标准？',
-a:'实用性、性价比、现实价值',
-b:'实用优先，兼顾一点感受',
-c:'物质实用与精神体验对半',
-d:'是否带来美好体验最重要',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:3,q:'选择一份工作，优先看重？',
-a:'薪资成长、现实发展前景',
-b:'看重发展同时顾及感受',
-c:'希望工作拥有部分意义感',
-d:'热爱、精神感受大于现实收益',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:3,q:'业余购物，你的购物车更多是？',
-a:'提升生活的实用器物',
-b:'以生活用品实用物件为主',
-c:'既有实用，也有爱玩爱好之物',
-d:'爱好、体验、精神享受类物品',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:3,q:'人生取舍时你认为？',
-a:'先把现实事业基础打好',
-b:'努力奋斗，适度享受生活',
-c:'奋斗与及时享乐互相平衡',
-d:'人生重在体验，活在当下',
-sa:3,sb:1,sc:-1,sd:-3},
-
-{d:3,q:'周末难得空闲，你的选择？',
-a:'利用时间提升自我现实层面',
-b:'处理琐事之余适度放松',
-c:'兼顾事务和个人愉悦体验',
-d:'完全沉浸在喜欢的体验之中',
-sa:3,sb:1,sc:-1,sd:-3}
+  {d:0,q:'周五晚上9点，你更可能',a:'刚下班，在地铁上回工作消息',b:'已经散步到家，茶都泡上了'},
+  {d:0,q:'周末安排通常是',a:'提前排满行程，一天当两天用',b:'刻意留白，睡到自然醒再说'},
+  {d:0,q:'外卖到了，你的操作是',a:'边吃边处理下一个待办',b:'必须先找好下饭剧才动筷子'},
+  {d:0,q:'遇到30分钟以上的排队',a:'非常烦躁，觉得浪费生命',b:'正好看看人间烟火'},
+  {d:0,q:'你走路的速度',a:'常被同行的人喊「慢点」',b:'常被问路的人拦下来'},
+  {d:0,q:'面对刚火起来的新店/新工具',a:'立刻试，争当第一波',b:'等它变成「老牌」再说'},
+  {d:1,q:'公司团建通知一发',a:'欣然前往，还能带动气氛',b:'「那天我可能有事」'},
+  {d:1,q:'参加完一场热闹聚会',a:'意犹未尽，转场二摊',b:'电量耗尽，急需独处回血'},
+  {d:1,q:'地铁上迎面遇见熟人',a:'热聊一路',b:'默契地低头玩手机'},
+  {d:1,q:'你结交新朋友的方式',a:'朋友的朋友局，越聊越嗨',b:'一对一深聊才自在'},
+  {d:1,q:'你的朋友圈状态',a:'高频更新，互动不断',b:'半年可见，甚至仅三天'},
+  {d:1,q:'搬了新家之后',a:'很快和邻居混熟',b:'住了三年没和对门说过话'},
+  {d:2,q:'一份工作让你不爽很久了',a:'裸辞！人生是旷野',b:'骑驴找马，先找好下家'},
+  {d:2,q:'你的理财方式',a:'股票基金都敢试试',b:'定期存款最香'},
+  {d:2,q:'去陌生城市旅行',a:'不怎么做攻略，到了再说',b:'攻略精确到每小时'},
+  {d:2,q:'有个看着不错但不确定的副业机会',a:'先干了再说',b:'观望评估三个月'},
+  {d:2,q:'你更认同哪句',a:'「稳定才是最大的风险」',b:'「冒险才是最大的风险」'},
+  {d:2,q:'玩游戏的你',a:'喜欢开荒新英雄新游戏',b:'一个英雄玩到天荒地老'},
+  {d:3,q:'突然多出一笔奖金',a:'存起来，让钱生钱',b:'订机票，去见山见海'},
+  {d:3,q:'理想的周末消费',a:'耐用好物，实用主义',b:'看展Livehouse，为体验买单'},
+  {d:3,q:'判断一笔钱花得值不值',a:'看性价比',b:'看快不快乐'},
+  {d:3,q:'换工作时你最看重',a:'薪资和成长曲线',b:'意义感和喜欢程度'},
+  {d:3,q:'你的购物车里常躺着',a:'收纳神器厨房好物',b:'乐器露营滑雪板'},
+  {d:3,q:'人生排序你更认同',a:'先立业，后享受',b:'及时行乐，人生无常'}
 ];
-
-/* ============ 标记串结果库 + = ~ - ============ */
+/* ============ 16型结果库（代码位：节奏/能量/风险/价值，0=前者 1=后者） ============ */
 const RESULTS = {
-  "++++":{city:"深圳",title:"湾区永动机",col:"#0B5FFF",cname:"科创蓝",
-    q:"「不是我卷，是深圳的风太大，站住就要用力。」",
-    x:"成就动机驱动的你，多巴胺来自「达成」本身，闲下来反而焦虑。心理学中的心理账户理论：你的时间、金钱与自我价值，是同一个账户。",
-    hi:"行动力天花板，商业嗅觉敏锐",bug:"把休息当罪恶，有燃尽风险",match:"最搭 广州型 · 互补 大理型",
-    gold:"我可以输，但不能不优雅地输。",
-    guide:["每周强制半天「无产出时间」","把运动当会议写进日程","每年做一次「什么都不为」的旅行"]},
-  "+++=":{city:"广州",title:"早茶实干家",col:"#D98E32",cname:"早茶琥珀",
-    q:"「生意可以慢慢来，早茶必须趁热喝。」",
-    x:"社会资本理论的行走标本：人脉不是你的工具，是你的生活方式。你靠关系密度获得安全感。",
-    hi:"资源整合大师，人情练达",bug:"不好意思拒绝，边界感弱",match:"最搭 佛山型 · 互补 上海型",
-    gold:"生意慢慢来，早茶趁热喝。",
-    guide:["练习说「我考虑下」","每月一次独处日","把人情记账，但别算太清"]},
-  "+++~":{city:"苏州",title:"园林精算师",col:"#3D6B5E",cname:"园林青",
-    q:"「园林要移步换景，人生要步步为营。」",
-    x:"延迟满足大师（棉花糖实验成年版）：别人看结果，你看过程。你的护城河叫「精细」。",
-    hi:"极致靠谱，细节天花板",bug:"完美主义拖延，不会享受当下",match:"最搭 上海型 · 互补 长沙型",
-    gold:"人生要步步为营。",
-    guide:["给完美设一个「够好线」","完成后奖励自己一次无意义消费","每月做一件「没用但喜欢」的事"]},
-  "+++-":{city:"武汉",title:"星城夜行侠",col:"#E63E2E",cname:"辣椒红",
-    q:"「人生得意须尽欢，我的字典里没有『太晚了』。」",
-    x:"「感觉寻求者」（Sensation Seeking）：你靠新鲜感与社交反馈充电，「会玩」是你的核心竞争力。",
-    hi:"气氛担当，点子王",bug:"持续性弱，容易冲动消费",match:"最搭 重庆型 · 互补 苏州型",
-    gold:"人生得意须尽欢。",
-    guide:["给每个点子配一个「执行搭子」","设一笔「随便花」预算对冲冲动","把夜生活挪一天给睡眠"]},
-
-  "++=+":{city:"杭州",title:"静安野心家",col:"#C9A96A",cname:"香槟金",
-    q:"「我可以输，但不能不优雅地输。」",
-    x:"自我呈现管理滴水不漏——你不是精致利己，只是把精力投向回报率最高的地方。",
-    hi:"专业壁垒，长线布局",bug:"过度自我监控，难以示弱",match:"最搭 北京型 · 互补 成都型",
-    gold:"输也要输得优雅。",
-    guide:["每月暴露一次「不完美」","找一个可以说废话的朋友","把KPI分一半给生活"]},
-  "++==":{city:"宁波",title:"",col:"#9E2B25",cname:"宫墙红",
-    q:"「待人热忱，做事张弛有度，务实稳重，不冒进也不躺平。」",
-    x:"外向开朗，做事张弛有度，务实稳重，不冒进也不躺平。",
-    hi:"稳重靠谱",bug:"偶尔保守",match:"最搭 无锡型",
-    gold:"进退从容。",
-    guide:["给自己多一点突破的机会"]},
-  "++=~":{city:"长沙",title:"星城夜行侠",col:"#E63E2E",cname:"辣椒红",
-    q:"「爱热闹、懂分寸，一边踏实谋生，一边热衷享受生活。」",
-    x:"一边踏实谋生，一边热衷享受生活。",
-    hi:"热爱生活，社交力强",bug:"容易冲动",match:"最搭 重庆型",
-    gold:"人间值得及时乐。",
-    guide:["设立冲动消费上限"]},
-  "++=-":{city:"重庆",title:"山城快意侠",col:"#C73E1D",cname:"火锅红",
-    q:"「是兄弟就干了这碗，是路人就各走各的桥。」",
-    x:"心理学中的「真实性」（Authenticity）：情绪即情即景，心理防御成本极低，活得通透也活得滚烫。",
-    hi:"仗义，感染力爆表",bug:"火药桶，事后后悔",match:"最搭 长沙型 · 互补 拉萨型",
-    gold:"爱憎分明，不装。",
-    guide:["发火前先做10次深呼吸","重要抉择隔夜再定","把直率留给值得的人"]},
-
-  "++~+":{city:"东莞",title:"",col:"#0B5FFF",cname:"科创蓝",
-    q:"节奏急促，擅长社交，习惯保守稳妥，看重现实回报。",
-    x:"节奏急促，擅长社交，习惯保守稳妥，看重现实回报。",
-    hi:"务实肯干",bug:"缺少松弛",match:"最搭 佛山型",
-    gold:"踏实向前。",
-    guide:["留出松弛时间"]},
-  "++~=":{city:"佛山",title:"功夫守成派",col:"#D4A017",cname:"醒狮金",
-    q:"「拳要日日练，日子要日日过。」",
-    x:"心流（Flow）大师：你在深耕的领域获得深层满足，不追风口，造地基。",
-    hi:"匠人精神，长期主义",bug:"对变化钝感",match:"最搭 昆明型 · 互补 苏州型",
-    gold:"不追风口，造地基。",
-    guide:["每年调研一次行业新玩法","给老手艺找新观众","别把「稳定」误当「安全」"]},
-  "++~~":{city:"泉州",title:"",col:"#5C8A3A",cname:"山茶绿",
-    q:"喜欢烟火日常，不喜大起大落，安稳度日，享受平凡里的美好。",
-    x:"喜欢烟火日常，不喜大起大落，安稳度日，享受平凡里的美好。",
-    hi:"知足常乐",bug:"惧怕变化",match:"最搭 大理型",
-    gold:"平凡即是幸福。",
-    guide:["偶尔尝试小改变"]},
-  "++~-":{city:"成都",title:"松弛乐天派",col:"#3E7C59",cname:"竹青",
-    q:"「卷不动了就到我这里来，火锅给你留着位置。」",
-    x:"享乐适应的低敏感人群：你天生会制造快乐，快乐密度极高。「松弛感」这个词，就是为你造的。",
-    hi:"治愈力，人间烟火气担当",bug:"拖延，舒适圈固化",match:"最搭 青岛型 · 互补 深圳型",
-    gold:"火锅给你留着位置。",
-    guide:["给安逸设一个小闹钟","每年折腾一件「没必要但想」的事","火锅照吃，步数照刷"]},
-
-  "++-+":{city:"郑州",title:"",col:"#0B5FFF",cname:"科创蓝",
-    q:"高效外向，偏向守成，目标感强，踏实过日子。",
-    x:"高效外向，偏向守成，目标感强，踏实过日子。",
-    hi:"踏实上进",bug:"容易紧绷",match:"最搭 合肥型",
-    gold:"脚踏实地。",
-    guide:["学会适度放松"]},
-  "++-=":{city:"合肥",title:"",col:"#D98E32",cname:"早茶琥珀",
-    q:"待人友善，不喜冒险，务实踏实，稳步前行。",
-    x:"待人友善，不喜冒险，务实踏实，稳步前行。",
-    hi:"稳重务实",bug:"惧怕风险",match:"最搭 南昌型",
-    gold:"稳步向前。",
-    guide:["接受可控小冒险"]},
-  "++-~":{city:"南昌",title:"",col:"#5C8A3A",cname:"山茶绿",
-    q:"热爱烟火，求稳，努力生活同时给自己留松弛空间。",
-    x:"热爱烟火，求稳，努力生活同时给自己留松弛空间。",
-    hi:"懂得平衡",bug:"回避大变动",match:"最搭 昆明型",
-    gold:"烟火与松弛共存。",
-    guide:["敢于接受生活变化"]},
-  "++--":{city:"昆明",title:"春城自在客",col:"#5C8A3A",cname:"山茶绿",
-    q:"「昆明的花不跟谁比美，开了就是春天。」",
-    x:"主观幸福感研究的行走证据：幸福=低欲望+高联结，你就是「够用主义」哲学的践行者。",
-    hi:"稳定输出，生活家本家",bug:"容易被误认为「不上进」",match:"最搭 佛山型 · 互补 北京型",
-    gold:"开了就是春天。",
-    guide:["偶尔也抢一次，让全世界看见","把「够用」的标准说出口","每年挑战一件舒适圈外的事"]},
-
-  "+=++":{city:"南京",title:"梧桐区生活家",col:"#C8963E",cname:"梧桐金",
-    q:"「梧桐叶落的时候，我正好想通了一件事。」",
-    x:"快节奏世界里的「内在生活者」：你用仪式感给日子镶边，对抗庸常的方式是把生活过成作品。",
-    hi:"审美力，情绪颗粒度细",bug:"想太多，行动偏慢",match:"最搭 厦门型 · 互补 温州型",
-    gold:"把生活过成作品。",
-    guide:["把诗写在周日，周一照样干","想法24小时内必须落地一步","少复盘，多出发"]},
-  "+=+=":{city:"无锡",title:"",col:"#C9A96A",cname:"香槟金",
-    q:"做事有冲劲但不急躁，社交有度，务实清醒，进退从容。",
-    x:"做事有冲劲但不急躁，社交有度，务实清醒，进退从容。",
-    hi:"清醒从容",bug:"顾虑较多",match:"最搭 烟台型",
-    gold:"清醒自持。",
-    guide:["减少过度思虑"]},
-  "+=+~":{city:"厦门",title:"屿上造梦人",col:"#2FA3A0",cname:"海岛青",
-    q:"「我不想赢过谁，只想美过昨天。」",
-    x:"「生活方式创业」的化身：你把人生当作品经营，自我决定理论中「自主需求」满格。",
-    hi:"生活提案能力，审美变现力",bug:"商业现实感弱",match:"最搭 大理型 · 互补 广州型",
-    gold:"只想美过昨天。",
-    guide:["给浪漫配一个财务模型","每季度做一次「冷血复盘」","找一个务实的合伙人"]},
-  "+=+-":{city:"珠海",title:"",col:"#2FA3A0",cname:"海岛青",
-    q:"节奏轻快，不喜繁杂社交，愿意拥抱变化，浪漫随性。",
-    x:"节奏轻快，不喜繁杂社交，愿意拥抱变化，浪漫随性。",
-    hi:"浪漫自由",bug:"现实感偏弱",match:"最搭 威海型",
-    gold:"随性而活。",
-    guide:["兼顾现实规划"]},
-
-  "+==+":{city:"青岛",title:"海风行动派",col:"#1B7FA6",cname:"海洋蓝",
-    q:"「风浪越大鱼越贵，但今晚先撸串。」",
-    x:"恢复性环境理论（ART）的天然信徒：你懂得效率的尽头是状态，会玩也会干，精力管理一流。",
-    hi:"团队粘合剂，持续输出",bug:"计划性差，随性误事",match:"最搭 成都型 · 互补 上海型",
-    gold:"效率的尽头是状态。",
-    guide:["给随性配一个截止日期","重要承诺写下来","保留海，但建个港口"]},
-  "====":{city:"上海",title:"均衡进取者",col:"#C9A96A",cname:"香槟金",
-    q:"「均衡进取，分寸感极强。有向上的野心，但懂得克制，兼顾现实与体面。【全B】」",
-    x:"成熟温和的进取者，既有追求，又懂得自我约束，在现实与自我之间寻找平衡。",
-    hi:"分寸感，成熟克制",bug:"容易过度顾及体面",match:"最搭 无锡型",
-    gold:"进退有度。",
-    guide:["允许自己偶尔不顾体面"]},
-  "+==~":{city:"烟台",title:"",col:"#5C8A3A",cname:"山茶绿",
-    q:"节奏舒服，不爱喧闹，稳中求进，谋生与感受兼顾。",
-    x:"节奏舒服，不爱喧闹，稳中求进，谋生与感受兼顾。",
-    hi:"平衡有度",bug:"缺少冲劲",match:"最搭 绍兴型",
-    gold:"谋生与感受兼顾。",
-    guide:["给自己设立更高目标"]},
-  "+==-":{city:"威海",title:"",col:"#5B7C99",cname:"苍山黛",
-    q:"节奏轻快、独处居多，做事留余地，偏爱简单松弛的体验。",
-    x:"节奏轻快、独处居多，做事留余地，偏爱简单松弛的体验。",
-    hi:"简单松弛",bug:"动力不足",match:"最搭 丽江型",
-    gold:"简单即是美好。",
-    guide:["适当提升行动力"]},
-
-  "+=~+":{city:"嘉兴",title:"",col:"#1B7FA6",cname:"海洋蓝",
-    q:"节奏偏快，社交克制，求稳保守，看重实实在在的收获。",
-    x:"节奏偏快，社交克制，求稳保守，看重实实在在的收获。",
-    hi:"务实稳重",bug:"不喜冒险",match:"最搭 常州型",
-    gold:"看重实在所得。",
-    guide:["尝试小冒险"]},
-  "+=~=":{city:"常州",title:"",col:"#D4A017",cname:"醒狮金",
-    q:"行事有度，不喜喧嚣，安稳为主，踏实过日子。",
-    x:"行事有度，不喜喧嚣，安稳为主，踏实过日子。",
-    hi:"安稳踏实",bug:"抗拒改变",match:"最搭 绍兴型",
-    gold:"安稳度日。",
-    guide:["拥抱微小变化"]},
-  "+=~~":{city:"绍兴",title:"",col:"#3D6B5E",cname:"园林青",
-    q:"节奏舒缓，偏爱安静，不喜风波，享受平淡诗意。",
-    x:"节奏舒缓，偏爱安静，不喜风波，享受平淡诗意。",
-    hi:"诗意平和",bug:"回避冲突",match:"最搭 丽江型",
-    gold:"平淡见诗意。",
-    guide:["学会直面矛盾"]},
-  "+=~-":{city:"丽江",title:"",col:"#5B7C99",cname:"苍山黛",
-    q:"节奏轻快，习惯独处，不爱冒险，享受自在时光。",
-    x:"节奏轻快，习惯独处，不爱冒险，享受自在时光。",
-    hi:"自在松弛",bug:"缺少现实规划",match:"最搭 大理型",
-    gold:"享受自在时光。",
-    guide:["做好现实兜底"]},
-
-  "+=-+":{city:"太原",title:"",col:"#0B5FFF",cname:"科创蓝",
-    q:"节奏明快、喜欢独处，保守谨慎，看重现实安稳。",
-    x:"节奏明快、喜欢独处，保守谨慎，看重现实安稳。",
-    hi:"谨慎务实",bug:"畏惧风险",match:"最搭 兰州型",
-    gold:"安稳第一。",
-    guide:["接受可控尝试"]},
-  "+=-=":{city:"兰州",title:"",col:"#D98E32",cname:"早茶琥珀",
-    q:"行事干脆，社交简单，求稳，务实本分。",
-    x:"行事干脆，社交简单，求稳，务实本分。",
-    hi:"本分踏实",bug:"不愿折腾",match:"最搭 贵阳型",
-    gold:"本分度日。",
-    guide:["偶尔折腾一下"]},
-  "+=-~":{city:"贵阳",title:"",col:"#5C8A3A",cname:"山茶绿",
-    q:"节奏轻快，偏爱独处，不喜折腾，生活松弛。",
-    x:"节奏轻快，偏爱独处，不喜折腾，生活松弛。",
-    hi:"松弛自在",bug:"缺少进取心",match:"最搭 大理型",
-    gold:"松弛度日。",
-    guide:["给自己设立小目标"]},
-  "+=--":{city:"大理",title:"苍山自由客",col:"#5B7C99",cname:"苍山黛",
-    q:"「我不是逃避，我只是去了有风的地方。」",
-    x:"自我决定理论中「自主需求」满格的人：你不在乎社会时钟，你的时钟在心里。",
-    hi:"创造力，野蛮生长的生命力",bug:"现实责任回避",match:"最搭 厦门型 · 互补 深圳型",
-    gold:"去了有风的地方。",
-    guide:["给自由配一个兜底账户","每半年碰一次地气","浪漫可以没有KPI，房租要有"]},
-
-  "~+++":{city:"北京",title:"帝都造梦人",col:"#9E2B25",cname:"宫墙红",
-    q:"「我先想清楚要改变世界哪里，再决定午饭吃什么。」",
-    x:"马斯洛需求顶层的自我实现者：你的野心不靠晒，靠熬。深度工作是你的默认模式。",
-    hi:"战略纵深，抗压韧性",bug:"理想化，容易清高",match:"最搭 深圳型 · 互补 昆明型",
-    gold:"先想清楚改变世界哪里。",
-    guide:["把理想拆成90天可验证的小目标","定期下凡体验烟火气","允许自己「偶尔不想改变世界」"]},
-  "~++=":{city:"济南",title:"",col:"#D98E32",cname:"早茶琥珀",
-    q:"节奏松弛，待人热忱，愿意尝试，做事留余地，稳重温和。",
-    x:"节奏松弛，待人热忱，愿意尝试，做事留余地，稳重温和。",
-    hi:"温和热忱",bug:"容易心软",match:"最搭 南宁型",
-    gold:"温和待人。",
-    guide:["学会拒绝"]},
-  "~++~":{city:"南宁",title:"",col:"#5C8A3A",cname:"山茶绿",
-    q:"从容不迫，爱交朋友，愿意尝试新事物，注重生活感受。",
-    x:"从容不迫，爱交朋友，愿意尝试新事物，注重生活感受。",
-    hi:"热爱生活",bug:"容易妥协",match:"最搭 海口型",
-    gold:"从容度日。",
-    guide:["坚持自我立场"]},
-  "~++-":{city:"海口",title:"",col:"#5B7C99",cname:"苍山黛",
-    q:"节奏舒缓，外向随和，敢于体验，活在当下。",
-    x:"节奏舒缓，外向随和，敢于体验，活在当下。",
-    hi:"活在当下",bug:"缺少长远规划",match:"最搭 北海型",
-    gold:"活在当下。",
-    guide:["兼顾长远规划"]},
-
-  "~=++":{city:"福州",title:"",col:"#1B7FA6",cname:"海洋蓝",
-    q:"节奏舒缓，社交有度，愿意突破，看重长远收益。",
-    x:"节奏舒缓，社交有度，愿意突破，看重长远收益。",
-    hi:"眼光长远",bug:"行动偏慢",match:"最搭 徐州型",
-    gold:"着眼长远。",
-    guide:["提升行动力"]},
-  "~=+=":{city:"徐州",title:"",col:"#C9A96A",cname:"香槟金",
-    q:"不急不躁，待人有分寸，稳中求进，踏实靠谱。",
-    x:"不急不躁，待人有分寸，稳中求进，踏实靠谱。",
-    hi:"踏实靠谱",bug:"节奏偏慢",match:"最搭 惠州型",
-    gold:"稳中求进。",
-    guide:["加快节奏"]},
-  "~=+~":{city:"惠州",title:"",col:"#5C8A3A",cname:"山茶绿",
-    q:"节奏松弛，社交克制，愿意尝试新事物，重视内心体验。",
-    x:"节奏松弛，社交克制，愿意尝试新事物，重视内心体验。",
-    hi:"重视内心",bug:"现实感不足",match:"最搭 北海型",
-    gold:"遵从内心。",
-    guide:["兼顾现实"]},
-  "~=+-":{city:"北海",title:"",col:"#5B7C99",cname:"苍山黛",
-    q:"节奏慢悠悠，不爱繁杂社交，喜欢新鲜体验，随性自在。",
-    x:"节奏慢悠悠，不爱繁杂社交，喜欢新鲜体验，随性自在。",
-    hi:"随性自在",bug:"缺少约束",match:"最搭 香格里拉型",
-    gold:"随性自在。",
-    guide:["给自己建立约束"]},
-
-  "~~++":{city:"保定",title:"",col:"#1B7FA6",cname:"海洋蓝",
-    q:"节奏舒缓，偏爱安静，求稳，务实顾家。",
-    x:"节奏舒缓，偏爱安静，求稳，务实顾家。",
-    hi:"顾家务实",bug:"不喜变动",match:"最搭 邯郸型",
-    gold:"安稳顾家。",
-    guide:["接受小变化"]},
-  "~~+=":{city:"邯郸",title:"",col:"#D4A017",cname:"醒狮金",
-    q:"性子从容，社交简单，安稳为主，踏实生活。",
-    x:"性子从容，社交简单，安稳为主，踏实生活。",
-    hi:"安稳踏实",bug:"抗拒改变",match:"最搭 张家界型",
-    gold:"踏实度日。",
-    guide:["拥抱新事物"]},
-  "~~+~":{city:"张家界",title:"",col:"#5C8A3A",cname:"山茶绿",
-    q:"节奏舒缓，享受独处，不喜风波，热爱自然与自由。",
-    x:"节奏舒缓，享受独处，不喜风波，热爱自然与自由。",
-    hi:"热爱自由",bug:"回避世俗",match:"最搭 香格里拉型",
-    gold:"热爱自然自由。",
-    guide:["适度接触世俗"]},
-  "~~+-":{city:"香格里拉",title:"",col:"#5B7C99",cname:"苍山黛",
-    q:"慢节奏，习惯独处，不爱冒险，遵从内心感受。",
-    x:"慢节奏，习惯独处，不爱冒险，遵从内心感受。",
-    hi:"遵从本心",bug:"脱离现实",match:"最搭 西安型",
-    gold:"遵从内心感受。",
-    guide:["落地现实生活"]},
-
-  "~~~+":{city:"西安",title:"慢煮烟火守成派",col:"#9E2B25",cname:"宫墙红",
-    q:"「日子从容，烟火绵长，守旧安稳，看重安稳的收获。」",
-    x:"享受安稳的烟火，不追逐大风大浪，看重实实在在所得。",
-    hi:"沉稳厚重，耐得住岁月",bug:"容易固守旧模式",match:"最搭 洛阳型",
-    gold:"岁月沉淀即是力量。",
-    guide:["每年尝试一点新东西","不要被过往束缚"]},
-  "~~~=":{city:"洛阳",title:"",col:"#D4A017",cname:"醒狮金",
-    q:"节奏舒缓，社交清淡，安稳度日，谋生有度。【全C】",
-    x:"温和松弛，不喜争抢。不激进也不躺平，在安稳日常里寻找属于自己的浪漫与自在。",
-    hi:"温和从容",bug:"缺少冲劲",match:"最搭 大理型",
-    gold:"安稳度日，自有浪漫。",
-    guide:["给自己设立挑战目标"]},
-  "~~~~":{city:"大理",title:"苍山自由客",col:"#5B7C99",cname:"苍山黛",
-    q:"「我不是逃避，我只是去了有风的地方。」【全C】",
-    x:"自我决定理论中「自主需求」满格的人：你不在乎社会时钟，你的时钟在心里。",
-    hi:"创造力，野蛮生长的生命力",bug:"现实责任回避",match:"最搭 厦门型 · 互补 深圳型",
-    gold:"去了有风的地方。",
-    guide:["给自由配一个兜底账户","每半年碰一次地气","浪漫可以没有KPI，房租要有"]},
-  "~~~-":{city:"凤凰",title:"",col:"#5B7C99",cname:"苍山黛",
-    q:"慢节奏，社交极简，拒绝压力，沉浸在自己喜欢的生活里。",
-    x:"慢节奏，社交极简，拒绝压力，沉浸在自己喜欢的生活里。",
-    hi:"远离纷扰",bug:"隔绝外界",match:"最搭 拉萨型",
-    gold:"沉浸自我世界。",
-    guide:["偶尔链接外界"]},
-
-  "-+++":{city:"西宁",title:"",col:"#1B7FA6",cname:"海洋蓝",
-    q:"节奏很慢，但待人热忱，有想法，有自己的追求。",
-    x:"节奏很慢，但待人热忱，有想法，有自己的追求。",
-    hi:"热忱有想法",bug:"节奏过慢",match:"最搭 喀什型",
-    gold:"慢也有力量。",
-    guide:["适度提高节奏"]},
-  "-++=":{city:"喀什",title:"",col:"#D98E32",cname:"早茶琥珀",
-    q:"日子从容松弛，热爱与人相处，做事谨慎，不喜激进。",
-    x:"日子从容松弛，热爱与人相处，做事谨慎，不喜激进。",
-    hi:"从容热忱",bug:"过于谨慎",match:"最搭 伊犁型",
-    gold:"从容度日。",
-    guide:["敢于激进一次"]},
-  "-++~":{city:"伊犁",title:"",col:"#5C8A3A",cname:"山茶绿",
-    q:"慢节奏，喜欢热闹，不喜压力，追随感受而活。",
-    x:"慢节奏，喜欢热闹，不喜压力，追随感受而活。",
-    hi:"追随感受",bug:"缺少现实规划",match:"最搭 林芝型",
-    gold:"随心而活。",
-    guide:["做好现实规划"]},
-  "-++-":{city:"林芝",title:"",col:"#5B7C99",cname:"苍山黛",
-    q:"节奏缓慢，随性合群，人生重心是体验与自由。",
-    x:"节奏缓慢，随性合群，人生重心是体验与自由。",
-    hi:"热爱体验",bug:"忽略现实",match:"最搭 稻城型",
-    gold:"人生重在体验。",
-    guide:["兼顾现实生存"]},
-
-  "-=++":{city:"稻城",title:"",col:"#1B7FA6",cname:"海洋蓝",
-    q:"节奏缓慢，社交克制，愿意为目标坚持，安静有力量。",
-    x:"节奏缓慢，社交克制，愿意为目标坚持，安静有力量。",
-    hi:"安静坚韧",bug:"不善表达",match:"最搭 酒泉型",
-    gold:"安静也有力量。",
-    guide:["学会表达自我"]},
-  "-=+=":{city:"酒泉",title:"",col:"#C9A96A",cname:"香槟金",
-    q:"日子舒缓，社交简单，稳中求进，安静踏实。",
-    x:"日子舒缓，社交简单，稳中求进，安静踏实。",
-    hi:"安静踏实",bug:"存在感弱",match:"最搭 阿勒泰型",
-    gold:"默默前行。",
-    guide:["提升存在感"]},
-  "-=+~":{city:"阿勒泰",title:"",col:"#5C8A3A",cname:"山茶绿",
-    q:"慢节奏，不爱喧嚣，愿意尝试新鲜风景，感受优先。",
-    x:"慢节奏，不爱喧嚣，愿意尝试新鲜风景，感受优先。",
-    hi:"感受优先",bug:"现实感弱",match:"最搭 塔县型",
-    gold:"感受即是收获。",
-    guide:["兼顾现实"]},
-  "-=+-":{city:"塔县",title:"",col:"#5B7C99",cname:"苍山黛",
-    q:"节奏缓慢，独处居多，向往自由，随心而行。",
-    x:"节奏缓慢，独处居多，向往自由，随心而行。",
-    hi:"向往自由",bug:"脱离世俗",match:"最搭 玉树型",
-    gold:"随心而行。",
-    guide:["落地世俗生活"]},
-
-  "--++":{city:"玉树",title:"",col:"#1B7FA6",cname:"海洋蓝",
-    q:"节奏缓慢，偏爱安静，保守求稳，只求安稳度日。",
-    x:"节奏缓慢，偏爱安静，保守求稳，只求安稳度日。",
-    hi:"安稳求稳",bug:"抗拒一切变化",match:"最搭 那曲型",
-    gold:"只求安稳。",
-    guide:["接受微小变化"]},
-  "--+=":{city:"那曲",title:"",col:"#D4A017",cname:"醒狮金",
-    q:"日子舒缓，社交极少，不喜变动，安稳即是归宿。",
-    x:"日子舒缓，社交极少，不喜变动，安稳即是归宿。",
-    hi:"安于现状",bug:"固步自封",match:"最搭 墨脱型",
-    gold:"安稳即是归宿。",
-    guide:["接触新事物"]},
-  "--+~":{city:"墨脱",title:"",col:"#5C8A3A",cname:"山茶绿",
-    q:"慢节奏，远离纷扰，不追功利，享受安静的生活。",
-    x:"慢节奏，远离纷扰，不追功利，享受安静的生活。",
-    hi:"淡泊宁静",bug:"隔绝外界",match:"最搭 波密型",
-    gold:"不追功利，内心安宁。",
-    guide:["适度链接外界"]},
-  "--+-":{city:"波密",title:"",col:"#5B7C99",cname:"苍山黛",
-    q:"节奏缓慢，习惯独处，拒绝折腾，自在随心。",
-    x:"节奏缓慢，习惯独处，拒绝折腾，自在随心。",
-    hi:"自在随心",bug:"回避挑战",match:"最搭 日喀则型",
-    gold:"自在随心。",
-    guide:["偶尔迎接挑战"]},
-
-  "---+":{city:"日喀则",title:"",col:"#1B7FA6",cname:"海洋蓝",
-    q:"时光缓慢，不喜社交，守着安稳，内心平和。",
-    x:"时光缓慢，不喜社交，守着安稳，内心平和。",
-    hi:"内心平和",bug:"社交隔绝",match:"最搭 山南亚型",
-    gold:"内心安宁。",
-    guide:["适度社交"]},
-  "---=":{city:"山南",title:"",col:"#D4A017",cname:"醒狮金",
-    q:"节奏悠长，社交极简，不求变化，平淡安宁。",
-    x:"节奏悠长，社交极简，不求变化，平淡安宁。",
-    hi:"平淡安宁",bug:"缺少波澜",match:"最搭 阿里型",
-    gold:"平淡亦是幸福。",
-    guide:["给自己一点波澜"]},
-  "---~":{city:"阿里",title:"",col:"#5C8A3A",cname:"山茶绿",
-    q:"节奏极慢，独处为主，看淡得失，向内感受。",
-    x:"节奏极慢，独处为主，看淡得失，向内感受。",
-    hi:"看淡得失",bug:"脱离世俗",match:"最搭 拉萨型",
-    gold:"向内感受。",
-    guide:["接触人间烟火"]},
-  "----":{city:"拉萨",title:"高原冥想者",col:"#C99B3F",cname:"高原金",
-    q:"「慢慢来，反正山高路远。」【全D】",
-    x:"正念（Mindfulness）天赋型选手：你在减法里获得丰盛，注意力是你守护得最好的资源。",
-    hi:"情绪稳定，洞察力",bug:"社交需求过低，容易和世界失联",match:"最搭 重庆型 · 互补 上海型",
-    gold:"慢慢来，山高路远。",
-    guide:["每季主动链接一次老朋友","把洞察说出来，别只放在心里","偶尔也下山看看"]}
+'0000':{city:'深圳',title:'湾区永动机',col:'#0B5FFF',cname:'科创蓝',
+ q:'「不是我卷，是深圳的风太大，站住就要用力。」',
+ x:'成就动机驱动的你，多巴胺来自「达成」本身，闲下来反而焦虑。心理学中的心理账户理论：你的时间、金钱与自我价值，是同一个账户。',
+ hi:'行动力天花板，商业嗅觉敏锐',bug:'把休息当罪恶，有燃尽风险',match:'最搭 广州型 · 互补 大理型',
+ gold:'我可以输，但不能不优雅地输。',
+ guide:['每周强制半天「无产出时间」','把运动当会议写进日程','每年做一次「什么都不为」的旅行']},
+'0010':{city:'长沙',title:'星城夜行侠',col:'#E63E2E',cname:'辣椒红',
+ q:'「人生得意须尽欢，我的字典里没有『太晚了』。」',
+ x:'「感觉寻求者」（Sensation Seeking）：你靠新鲜感与社交反馈充电，「会玩」是你的核心竞争力。',
+ hi:'气氛担当，点子王',bug:'持续性弱，容易冲动消费',match:'最搭 重庆型 · 互补 苏州型',
+ gold:'人生得意须尽欢。',
+ guide:['给每个点子配一个「执行搭子」','设一笔「随便花」预算对冲冲动','把夜生活挪一天给睡眠']},
+'0001':{city:'广州',title:'早茶实干家',col:'#D98E32',cname:'早茶琥珀',
+ q:'「生意可以慢慢来，早茶必须趁热喝。」',
+ x:'社会资本理论的行走标本：人脉不是你的工具，是你的生活方式。你靠关系密度获得安全感。',
+ hi:'资源整合大师，人情练达',bug:'不好意思拒绝，边界感弱',match:'最搭 佛山型 · 互补 上海型',
+ gold:'生意慢慢来，早茶趁热喝。',
+ guide:['练习说「我考虑下」','每月一次独处日','把人情记账，但别算太清']},
+'0011':{city:'重庆',title:'山城快意侠',col:'#C73E1D',cname:'火锅红',
+ q:'「是兄弟就干了这碗，是路人就各走各的桥。」',
+ x:'心理学中的「真实性」（Authenticity）：情绪即情即景，心理防御成本极低，活得通透也活得滚烫。',
+ hi:'仗义，感染力爆表',bug:'火药桶，事后后悔',match:'最搭 长沙型 · 互补 拉萨型',
+ gold:'爱憎分明，不装。',
+ guide:['发火前先做10次深呼吸','重要决定隔夜再定','把直率留给值得的人']},
+'0100':{city:'上海',title:'静安野心家',col:'#C9A96A',cname:'香槟金',
+ q:'「我可以输，但不能不优雅地输。」',
+ x:'自我呈现管理滴水不漏——你不是精致利己，只是把精力投向回报率最高的地方。',
+ hi:'专业壁垒，长线布局',bug:'过度自我监控，难以示弱',match:'最搭 北京型 · 互补 成都型',
+ gold:'输也要输得优雅。',
+ guide:['每月暴露一次「不完美」','找一个可以说废话的朋友','把KPI分一半给生活']},
+'0110':{city:'北京',title:'帝都造梦人',col:'#9E2B25',cname:'宫墙红',
+ q:'「我先想清楚要改变世界哪里，再决定午饭吃什么。」',
+ x:'马斯洛需求顶层的自我实现者：你的野心不靠晒，靠熬。深度工作是你的默认模式。',
+ hi:'战略纵深，抗压韧性',bug:'理想化，容易清高',match:'最搭 深圳型 · 互补 昆明型',
+ gold:'先想清楚改变世界哪里。',
+ guide:['把理想拆成90天可验证的小目标','定期下凡体验烟火气','允许自己「偶尔不想改变世界」']},
+'0101':{city:'苏州',title:'园林精算师',col:'#3D6B5E',cname:'园林青',
+ q:'「园林要移步换景，人生要步步为营。」',
+ x:'延迟满足大师（棉花糖实验成年版）：别人看结果，你看过程。你的护城河叫「精细」。',
+ hi:'极致靠谱，细节天花板',bug:'完美主义拖延，不会享受当下',match:'最搭 上海型 · 互补 长沙型',
+ gold:'人生要步步为营。',
+ guide:['给完美设一个「够好线」','完成后奖励自己一次无意义消费','每月做一件「没用但喜欢」的事']},
+'0111':{city:'南京',title:'梧桐区生活家',col:'#C8963E',cname:'梧桐金',
+ q:'「梧桐叶落的时候，我正好想通了一件事。」',
+ x:'快节奏世界里的「内在生活者」：你用仪式感给日子镶边，对抗庸常的方式是把生活过成作品。',
+ hi:'审美力，情绪颗粒度细',bug:'想太多，行动偏慢',match:'最搭 厦门型 · 互补 温州型',
+ gold:'把生活过成作品。',
+ guide:['把诗写在周日，周一照样干','想法24小时内必须落地一步','少复盘，多出发']},
+'1000':{city:'青岛',title:'海风行动派',col:'#1B7FA6',cname:'海洋蓝',
+ q:'「风浪越大鱼越贵，但今晚先撸串。」',
+ x:'恢复性环境理论（ART）的天然信徒：你懂得效率的尽头是状态，会玩也会干，精力管理一流。',
+ hi:'团队粘合剂，持续输出',bug:'计划性差，随性误事',match:'最搭 成都型 · 互补 上海型',
+ gold:'效率的尽头是状态。',
+ guide:['给随性配一个截止日期','重要承诺写下来','保留海，但建个港口']},
+'1010':{city:'厦门',title:'屿上造梦人',col:'#2FA3A0',cname:'海岛青',
+ q:'「我不想赢过谁，只想美过昨天。」',
+ x:'「生活方式创业」的化身：你把人生当作品经营，自我决定理论中「自主需求」满格。',
+ hi:'生活提案能力，审美变现力',bug:'商业现实感弱',match:'最搭 大理型 · 互补 广州型',
+ gold:'只想美过昨天。',
+ guide:['给浪漫配一个财务模型','每季度做一次「冷血复盘」','找一个务实的合伙人']},
+'1001':{city:'昆明',title:'春城自在客',col:'#5C8A3A',cname:'山茶绿',
+ q:'「昆明的花不跟谁比美，开了就是春天。」',
+ x:'主观幸福感研究的行走证据：幸福=低欲望+高联结，你就是「够用主义」哲学的践行者。',
+ hi:'稳定输出，生活家本家',bug:'容易被误认为「不上进」',match:'最搭 佛山型 · 互补 北京型',
+ gold:'开了就是春天。',
+ guide:['偶尔也抢一次，让全世界看见','把「够用」的标准说出口','每年挑战一件舒适圈外的事']},
+'1011':{city:'成都',title:'松弛乐天派',col:'#3E7C59',cname:'竹青',
+ q:'「卷不动了就到我这里来，火锅给你留着位置。」',
+ x:'享乐适应的低敏感人群：你天生会制造快乐，快乐密度极高。「松弛感」这个词，就是为你造的。',
+ hi:'治愈力，人间烟火气担当',bug:'拖延，舒适圈固化',match:'最搭 青岛型 · 互补 深圳型',
+ gold:'火锅给你留着位置。',
+ guide:['给安逸设一个小闹钟','每年折腾一件「没必要但想」的事','火锅照吃，步数照刷']},
+'1100':{city:'温州',title:'敢闯合伙人',col:'#8A6642',cname:'瓯江茶褐',
+ q:'「不响，不代表不在场。」',
+ x:'熟人社会里的胆识型决策者：机会成本嗅觉刻在基因里，别人看风险，你看赔率。',
+ hi:'决断力，抗压，说到做到',bug:'表达太少，容易被低估',match:'最搭 苏州型 · 互补 厦门型',
+ gold:'不响，不代表不在场。',
+ guide:['每月讲一次你在做的事','让信任的人看见过程','把胆子分一点给生活']},
+'1110':{city:'大理',title:'苍山自由客',col:'#5B7C99',cname:'苍山黛',
+ q:'「我不是逃避，我只是去了有风的地方。」',
+ x:'自我决定理论中「自主需求」满格的人：你不在乎社会时钟，你的时钟在心里。',
+ hi:'创造力，野蛮生长的生命力',bug:'现实责任回避',match:'最搭 厦门型 · 互补 深圳型',
+ gold:'去了有风的地方。',
+ guide:['给自由配一个兜底账户','每半年碰一次地气','浪漫可以没有KPI，房租要有']},
+'1101':{city:'佛山',title:'功夫守成派',col:'#D4A017',cname:'醒狮金',
+ q:'「拳要日日练，日子要日日过。」',
+ x:'心流（Flow）大师：你在深耕的领域获得深层满足，不追风口，造地基。',
+ hi:'匠人精神，长期主义',bug:'对变化钝感',match:'最搭 昆明型 · 互补 苏州型',
+ gold:'不追风口，造地基。',
+ guide:['每年调研一次行业新玩法','给老手艺找新观众','别把「稳定」误当「安全」']},
+'1111':{city:'拉萨',title:'高原冥想者',col:'#C99B3F',cname:'高原金',
+ q:'「慢慢来，反正山高路远。」',
+ x:'正念（Mindfulness）天赋型选手：你在减法里获得丰盛，注意力是你守护得最好的资源。',
+ hi:'情绪稳定，洞察力',bug:'社交需求过低，容易和世界失联',match:'最搭 重庆型 · 互补 上海型',
+ gold:'慢慢来，山高路远。',
+ guide:['每季主动链接一次老朋友','把洞察说出来，别只放在心里','偶尔也下山看看']}
 };
-
 /* ============ 工具函数 ============ */
 const $ = id => document.getElementById(id);
-function show(id){
-  console.log('切换页面到：', id);
-  try{
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
-    $(id).classList.add('on');
-    window.scrollTo(0,0);
-  }catch(e){
-    console.error('show函数报错：',e);
-  }
-}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');window.scrollTo(0,0);}
 let toastTimer=null;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);}
-function load(key,def){try{return JSON.parse(localStorage.getItem(key))??def}catch(e){console.error('load',e);return def}}
-function save(key,val){try{localStorage.setItem(key,JSON.stringify(val))}catch(e){console.error('save',e);}}
-/* ============ 密码校验：调用Supabase REST API ============ */
+function load(key,def){try{return JSON.parse(localStorage.getItem(key))??def}catch(e){return def}}
+function save(key,val){localStorage.setItem(key,JSON.stringify(val))}
+
+/* ============ 密码校验：调用Supabase RPC ============ */
 let currentPwd=null;
 let isRequesting=false;
+
 async function apiStart(pwd){
-  try{
-    const q = encodeURIComponent(pwd);
-    const selUrl = `${SUPABASE_URL}/rest/v1/test_passwords?pwd=eq.${q}&select=pwd,max_uses,used`;
-    const selRes = await fetch(selUrl,{
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_test_password`,{
+      method:"POST",
+      cache:"no-store",
       headers:{
         "apikey": SUPABASE_ANON_KEY,
-        "Authorization":`Bearer ${SUPABASE_ANON_KEY}`
-      }
-    });
-    const rows = await selRes.json();
-    if(!Array.isArray(rows) || rows.length===0){
-      return {ok:false,error:"invalid"};
-    }
-    const row = rows[0];
-    if(row.used >= row.max_uses){
-      return {ok:false,error:"exhausted"};
-    }
-    const newUsed = row.used + 1;
-    const patchUrl = `${SUPABASE_URL}/rest/v1/test_passwords?pwd=eq.${q}`;
-    await fetch(patchUrl,{
-      method:"PATCH",
-      headers:{
-        "apikey": SUPABASE_ANON_KEY,
-        "Authorization":`Bearer ${SUPABASE_ANON_KEY}`,
         "Content-Type":"application/json"
       },
-      body:JSON.stringify({used:newUsed})
+      body: JSON.stringify({ input_pwd: pwd })
     });
-    const left = row.max_uses - newUsed;
-    return {ok:true, left};
+    const data = await res.json();
+    return data;
   }catch(e){
-    console.error("网络异常捕获：",e);
-    return {ok:false,error:"network"};
+    console.error(e);
+    return {ok:false,error:'network'};
   }
 }
+
 $('btnGate').onclick=async ()=>{
   if(isRequesting) return;
   const pwd=$('pwd').value.trim();
-  if(!pwd){
-    $('pwdErr').textContent='请输入测试密码';
-    toast('请输入测试密码');
-    return;
-  }
+  if(!pwd){$('pwdErr').textContent='请输入测试密码';return}
+
   isRequesting=true;
   $('btnGate').disabled=true;
   $('btnGate').textContent='验证中…';
   $('pwdErr').textContent='';
+
   const ret=await apiStart(pwd);
+
   isRequesting=false;
   $('btnGate').disabled=false;
   $('btnGate').textContent='开始测试';
+
   if(!ret.ok){
     if(ret.error==='invalid'){
       $('pwdErr').textContent='密码不正确，请重试';
-      toast('密码不正确，请重试');
     }else if(ret.error==='exhausted'){
       $('pwdErr').textContent='该密码的测试机会已用完';
-      toast('该密码的测试机会已用完');
       $('btnGate').disabled=true;
-    }else if(ret.error==='network'){
-      $('pwdErr').textContent='网络请求失败！不能本地双击打开，需要网页服务器部署';
-      toast('网络请求失败！不能本地双击打开，需要网页服务器部署');
+    }else{
+      $('pwdErr').textContent='网络异常，请稍后重试';
     }
     return;
   }
   currentPwd=pwd;
   $('pwdHint').textContent=`验证通过，本密码剩余 ${ret.left} 次测试机会`;
-  toast("密码校验成功");
-  localStorage.removeItem('cpt_progress');
-  cur=0;
-  answers=Array(QUESTIONS.length).fill(null);
+
+  const prog=load('cpt_progress',null);
+  if(prog && prog.answers.some(a=>a!==null) && prog.answers.some(a=>a===null)){
+    if(confirm('检测到你上次未完成的答题进度，是否继续？')){
+      cur=prog.cur;answers=prog.answers;renderQ();show('s-quiz');
+      return;
+    }
+  }
+  cur=0;answers=Array(QUESTIONS.length).fill(null);
   save('cpt_progress',{cur,answers});
   renderQ();
   show('s-quiz');
 };
+
+//输入框输入时清空错误，恢复按钮
 $('pwd').addEventListener('input',()=>{
   $('pwdErr').textContent='';
   $('btnGate').disabled=false;
-  $('pwdHint').textContent='每个密码可测试 3 次<br><small>⚠️本页面需要部署网页服务器，本地直接打开会网络报错</small>';
+  $('pwdHint').textContent='每个密码可测试 3 次';
 });
+
 $('pwd').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnGate').click()});
-/* ============ 四选项答题逻辑 ============ */
+
+/* ============ 答题 ============ */
 let cur=0, answers=Array(QUESTIONS.length).fill(null);
 function renderQ(){
-  console.log('renderQ运行，当前题号：', cur);
-  try{
-    const q=QUESTIONS[cur];
-    $('qNum').textContent=`${cur+1} / ${QUESTIONS.length}`;
-    const dim = DIMS[q.d] ?? DIMS[0];
-    $('dimName').textContent=dim.name;
-    $('barFill').style.width=(cur/QUESTIONS.length*100)+'%';
-    $('qText').textContent=q.q;
-    $('optA').textContent=q.a;
-    $('optB').textContent=q.b;
-    $('optC').textContent=q.c;
-    $('optD').textContent=q.d;
-    $('optA').classList.toggle('sel',answers[cur]==='A');
-    $('optB').classList.toggle('sel',answers[cur]==='B');
-    $('optC').classList.toggle('sel',answers[cur]==='C');
-    $('optD').classList.toggle('sel',answers[cur]==='D');
-    $('btnPrev').style.visibility=cur===0?'hidden':'visible';
-  }catch(e){
-    console.error('renderQ报错：',e);
-    toast('渲染题目异常，请刷新重试');
-  }
+  const q=QUESTIONS[cur];
+  $('qNum').textContent=`${cur+1} / ${QUESTIONS.length}`;
+  $('dimName').textContent=DIMS[q.d].name;
+  $('barFill').style.width=(cur/QUESTIONS.length*100)+'%';
+  $('qText').textContent=q.q;
+  $('optA').textContent=q.a; $('optB').textContent=q.b;
+  $('optA').classList.toggle('sel',answers[cur]===0);
+  $('optB').classList.toggle('sel',answers[cur]===1);
+  $('btnPrev').style.visibility=cur===0?'hidden':'visible';
 }
-
-function pick(choice){
-  answers[cur]=choice;
-  save('cpt_progress',{cur,answers});
+function pick(i){
+  answers[cur]=i;save('cpt_progress',{cur,answers});
   renderQ();
   setTimeout(()=>{
-    if(cur<QUESTIONS.length-1){
-      cur++;
-      save('cpt_progress',{cur,answers});
-      renderQ();
-    }else finish();
+    if(cur<QUESTIONS.length-1){cur++;save('cpt_progress',{cur,answers});renderQ();}
+    else finish();
   },280);
 }
-
-$('optA').onclick=()=>pick('A');
-$('optB').onclick=()=>pick('B');
-$('optC').onclick=()=>pick('C');
-$('optD').onclick=()=>pick('D');
-$('btnPrev').onclick=()=>{
-  if(cur>0){
-    cur--;
-    save('cpt_progress',{cur,answers});
-    renderQ();
-  }
-};
-
-//单维度分数转标记 + >7；- <‑7；>=0 → =；<0 → ~
-function getMark(score){
-  if(score > 7) return "+";
-  else if(score < -7) return "-";
-  else if(score >= 0) return "=";
-  else return "~";
-}
-
+$('optA').onclick=()=>pick(0);
+$('optB').onclick=()=>pick(1);
+$('btnPrev').onclick=()=>{if(cur>0){cur--;save('cpt_progress',{cur,answers});renderQ();}};
 function computeCode(){
-  const dimScore = [0,0,0,0];
-  for(let i=0;i<QUESTIONS.length;i++){
-    const q = QUESTIONS[i];
-    const ans = answers[i];
-    let scoreAdd = 0;
-    if(ans === "A") scoreAdd = q.sa;
-    else if(ans === "B") scoreAdd = q.sb;
-    else if(ans === "C") scoreAdd = q.sc;
-    else if(ans === "D") scoreAdd = q.sd;
-    const dimIndex = q.d;
-    if(dimIndex >=0 && dimIndex <=3){
-      dimScore[dimIndex] += scoreAdd;
-    }
-  }
-  console.log("各维度分数：", dimScore);
-  let markStr = "";
+  let s='';
   for(let d=0;d<4;d++){
-    markStr += getMark(dimScore[d]);
+    let n1=0;QUESTIONS.forEach((q,i)=>{if(q.d===d&&answers[i]===1)n1++});
+    s+= n1>=3 ? '1':'0';
   }
-  console.log("输出4位标记串：", markStr);
-  return markStr;
+  return s;
 }
-
 function finish(){
-  const code = computeCode();
+  const code=computeCode();
   save('cpt_progress',{cur:0,answers:Array(QUESTIONS.length).fill(null)});
   location.hash='r='+code;
   showResult(code,false);
 }
-
 /* ============ 结果页 ============ */
-function codeName(code){
-  let out="";
-  for(let i=0;i<4;i++){
-    const d=DIMS[i];
-    const ch=code[i];
-    if(ch==="+") out+=d.poles[0]+" ";
-    else if(ch==="-") out+=d.poles[1]+" ";
-    else if(ch==="=") out+="均衡 ";
-    else out+="偏"+d.poles[1]+" ";
-  }
-  return out.trim();
-}
-
+function codeName(code){return [...code].map((b,i)=>DIMS[i].poles[+b]).join('·')}
 function showResult(code,fromShare){
-  const r=RESULTS[code];
-  if(!r){
-    toast("暂无匹配人格结果");
-    show('s-gate');
-    return;
-  }
+  const r=RESULTS[code]; if(!r){show('s-gate');return}
   const banner=$('friendBanner');
   if(fromShare){
     banner.style.display='block';
-    banner.innerHTML=`你的朋友是【${r.city}型 · ${r.title||""}】<br>测测你是哪座城？`;
+    banner.innerHTML=`你的朋友是【${r.city}型 · ${r.title}】<br>测测你是哪座城？`;
   }else banner.style.display='none';
   $('rCard').innerHTML=`
-    <div style="color:${r.col};font-size:12px;letter-spacing:2px">${r.cname||""}</div>
+    <div style="color:${r.col};font-size:12px;letter-spacing:2px">${r.cname}</div>
     <div class="rcity">${r.city}型</div>
-    <div class="rtitle">${r.title||""}</div>
-    <div class="chips">${[...code].map((ch,i)=>{
-      let lab="";
-      if(ch==="+") lab=DIMS[i].poles[0]+"系";
-      else if(ch==="-") lab=DIMS[i].poles[1]+"系";
-      else if(ch==="=") lab="均衡系";
-      else lab="偏"+DIMS[i].poles[1]+"系";
-      return `<span class="chip">${lab}</span>`;
-    }).join('')}</div>
+    <div class="rtitle">${r.title}</div>
+    <div class="chips">${[...code].map((b,i)=>`<span class="chip">${DIMS[i].poles[+b]}系</span>`).join('')}</div>
     <div class="rquote">${r.q}</div>
     <div class="rsec">人格解析</div><div class="rtext">${r.x}</div>
     <div class="cols">
-      <div class="col"><div class="t">你的高光</div><div class="v">${r.hi||""}</div></div>
-      <div class="col"><div class="t">你的盲区</div><div class="v">${r.bug||""}</div></div>
+      <div class="col"><div class="t">你的高光</div><div class="v">${r.hi}</div></div>
+      <div class="col"><div class="t">你的盲区</div><div class="v">${r.bug}</div></div>
     </div>
-    <div class="rsec">城市关系</div><div class="rtext">${r.match||""}</div>
+    <div class="rsec">城市关系</div><div class="rtext">${r.match}</div>
     <div class="rsec">生存指南</div>
-    <ul class="guide">${(r.guide||[]).map(g=>`<li>${g}</li>`).join('')}</ul>
-    <div class="gold">${r.gold||""}</div>`;
+    <ul class="guide">${r.guide.map(g=>`<li>${g}</li>`).join('')}</ul>
+    <div class="gold">${r.gold}</div>`;
   show('s-result');
   $('btnPoster').onclick=()=>openPoster(code);
   $('btnCopy').onclick=()=>copyLink(code);
@@ -949,11 +401,10 @@ function showResult(code,fromShare){
     show('s-gate');
     $('pwd').value='';
     $('pwdErr').textContent='';
-    $('pwdHint').textContent=`每个密码可测试 ${MAX_USES} 次<br><small>⚠️本页面需要部署网页服务器，本地直接打开会网络报错</small>`;
+    $('pwdHint').textContent=`每个密码可测试 ${MAX_USES} 次`;
     $('btnGate').disabled=false;
   };
 }
-
 function copyLink(code){
   const url=location.origin+location.pathname+'#r='+code;
   if(navigator.clipboard&&navigator.clipboard.writeText){
@@ -965,32 +416,7 @@ function copyLink(code){
   }
 }
 
-/* ============ 海报完整逻辑 ============ */
-function openPoster(code){
-  $('posterModal').classList.add('on');
-  drawPoster(code);
-}
-$('btnClosePoster').onclick=()=>{
-  $('posterModal').classList.remove('on');
-};
-$('btnSavePoster').onclick=async ()=>{
-  const canvas = $('posterCanvas');
-  try{
-    const blob = await new Promise(resolve=>canvas.toBlob(b=>resolve(b),'image/png'));
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = '城市人格结果.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
-    toast("海报已开始下载");
-  }catch(e){
-    toast("保存失败，请截图");
-    console.error(e);
-  }
-};
-
+/* ============ 海报生成（Canvas 合成 1242×1656） ============ */
 function wrapLines(ctx,text,maxW){
   const lines=[];let line='';
   for(const ch of text){
@@ -999,31 +425,106 @@ function wrapLines(ctx,text,maxW){
   }
   if(line)lines.push(line);return lines;
 }
-
 function drawPoster(code){
   const r=RESULTS[code];
   const cv=$('posterCanvas'),ctx=cv.getContext('2d');
   const W=1242,H=1656,M=96;
   ctx.fillStyle='#F7F4EE';ctx.fillRect(0,0,W,H);
-  const INK='#2B2B2B',GRAY='#9a917f';
+  const INK='#2B2B2B',GRAY='#8a8172';
   const SERIF='"Songti SC","STSong",SimSun,serif';
   const SANS='"PingFang SC","Microsoft YaHei",sans-serif';
   ctx.fillStyle=GRAY;ctx.font=`26px ${SANS}`;
   ctx.textAlign='left';ctx.fillText('你的性格最像哪座城？',M,120);
   ctx.textAlign='right';ctx.font=`24px monospace`;
-  ctx.fillText('标记串 '+code,W-M,120);
+  ctx.fillText('四维代码 '+codeName(code),W-M,120);
   ctx.textAlign='left';ctx.fillStyle=r.col;
   ctx.font=`700 150px ${SERIF}`;
   ctx.fillText(r.city+'型',M,330);
   ctx.fillStyle=INK;ctx.font=`500 44px ${SANS}`;
-  ctx.fillText(r.title||"",M,404);
+  ctx.fillText(r.title,M,404);
   ctx.strokeStyle=r.col;ctx.lineWidth=3;
   ctx.beginPath();ctx.arc(W-M-90,300,86,0,Math.PI*2);ctx.stroke();
   ctx.beginPath();ctx.arc(W-M-90,300,64,0,Math.PI*2);ctx.stroke();
   ctx.fillStyle=r.col;ctx.font=`500 60px ${SERIF}`;
   ctx.textAlign='center';ctx.fillText(r.city[0],W-M-90,322);
   ctx.textAlign='left';
+  const poles=[...code].map((b,i)=>DIMS[i].poles[+b]+'系');
   let cx=M;
   ctx.font=`26px ${SANS}`;
-  const chipLab = [...code].map((ch,i)=>{
-    if(ch==="+") return DIMS[i].poles[0]+"
+  poles.forEach(p=>{
+    const w=ctx.measureText(p).width+40;
+    ctx.strokeStyle=r.col;ctx.lineWidth=2;
+    ctx.beginPath();ctx.roundRect(cx,452,w,52,26);ctx.stroke();
+    ctx.fillStyle=INK;ctx.fillText(p,cx+20,487);
+    cx+=w+20;
+  });
+  let y=620;
+  ctx.strokeStyle='#d9d2c0';ctx.setLineDash([10,8]);ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(M,y-50);ctx.lineTo(W-M,y-50);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle=INK;ctx.font=`700 74px ${SANS}`;
+  const qLines=wrapLines(ctx,r.q,W-2*M);
+  qLines.forEach(l=>{ctx.fillText(l,M,y);y+=100});
+  y+=6;
+  ctx.setLineDash([10,8]);
+  ctx.beginPath();ctx.moveTo(M,y);ctx.lineTo(W-M,y);ctx.stroke();
+  ctx.setLineDash([]);
+  y+=64;
+  ctx.fillStyle=GRAY;ctx.font=`26px ${SANS}`;
+  ctx.fillText('人格解析',M,y);y+=48;
+  ctx.fillStyle='#4a453c';ctx.font=`34px ${SANS}`;
+  wrapLines(ctx,r.x,W-2*M).forEach(l=>{ctx.fillText(l,M,y);y+=52});
+  y+=34;
+  const colW=(W-2*M-24)/2,boxH=170;
+  [[ '你的高光', r.hi ],[ '你的盲区', r.bug ]].forEach(([t,v],i)=>{
+    const bx=M+i*(colW+24);
+    ctx.strokeStyle='#e8e2d4';ctx.lineWidth=2;
+    ctx.beginPath();ctx.roundRect(bx,y,colW,boxH,14);ctx.stroke();
+    ctx.fillStyle=GRAY;ctx.font=`24px ${SANS}`;
+    ctx.fillText(t,bx+26,y+48);
+    ctx.fillStyle=INK;ctx.font=`30px ${SANS}`;
+    wrapLines(ctx,v,colW-52).slice(0,2).forEach((l,j)=>ctx.fillText(l,bx+26,y+96+j*42));
+  });
+  y+=boxH+56;
+  ctx.fillStyle=GRAY;ctx.font=`26px ${SANS}`;
+  ctx.fillText('城市关系',M,y);y+=46;
+  ctx.fillStyle='#4a453c';ctx.font=`32px ${SANS}`;
+  ctx.fillText(r.match,M,y);
+  const fy=H-210;
+  ctx.strokeStyle='#d9d2c0';ctx.beginPath();ctx.moveTo(M,fy-40);ctx.lineTo(W-M,fy-40);ctx.stroke();
+  ctx.strokeStyle=INK;ctx.lineWidth=3;
+  ctx.strokeRect(M,fy,150,150);
+  ctx.fillStyle=GRAY;ctx.font=`20px monospace`;ctx.textAlign='center';
+  ctx.fillText('QR',M+75,fy+86);
+  ctx.textAlign='left';ctx.fillStyle=INK;ctx.font=`32px ${SANS}`;
+  ctx.fillText('测测你的城市人格',M+186,fy+64);
+  ctx.fillStyle=GRAY;ctx.font=`24px ${SANS}`;
+  ctx.fillText('16种人格，你是哪座城？',M+186,fy+106);
+  ctx.font=`18px ${SANS}`;ctx.fillStyle='#b3ab98';
+  ctx.fillText('本测试为娱乐向轻测评，结果不构成心理学诊断或职业建议',M,H-28);
+}
+function openPoster(code){
+  drawPoster(code);
+  $('posterModal').classList.add('on');
+}
+$('btnClosePoster').onclick=()=>$('posterModal').classList.remove('on');
+$('posterModal').addEventListener('click',e=>{if(e.target===$('posterModal'))$('posterModal').classList.remove('on')});
+$('btnSavePoster').onclick=()=>{
+  const cv=$('posterCanvas');
+  cv.toBlob(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='城市人格-'+RESULTS[location.hash.replace('#r=','')].city+'型.png';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    toast('海报已保存：手机端长按图片存入相册，电脑端已下载');
+  },'image/png');
+};
+/* ============ 启动：处理分享链接 #r=xxxx ============ */
+(function init(){
+  const m=location.hash.match(/#r=([01]{4})/);
+  if(m&&RESULTS[m[1]]){showResult(m[1],true);}
+})();
+</script>
+</body>
+</html>
