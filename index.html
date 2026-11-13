@@ -300,7 +300,6 @@ sa:3,sb:1,sc:-1,sd:-3}
 score > 6      → P 正向
 -6 ≤ score ≤6  → M 均衡中间
 score < -6     → N 负向
-全B每题+1，6题总和=6 → M；全C每题‑1总和‑6 → M；全A=18→P；全D=‑18→N
 */
 const RESULTS = {
 "PPPP":{city:"深圳",title:"湾区永动机",col:"#0B5FFF",cname:"科创蓝",
@@ -469,28 +468,24 @@ x:"节奏中等，社交偏弱均衡，偏向守成，更看重精神感受。",
 hi:"温和从容，内心丰盈",bug:"缺少冲劲",match:"最搭 大理型",
 gold:"安稳度日，自有浪漫。",
 guide:["给自己设立适度挑战目标"]},
-
 "NMNN":{city:"凤凰",title:"边城闲居者",col:"#5B7C99",cname:"苍山黛",
 q:"「远离喧嚣，守好属于自己的小世界。」",
 x:"节奏偏慢，社交少，求稳，以精神体验为主。",
 hi:"内心宁静，不喜纷争",bug:"容易隔绝外界",match:"最搭 丽江型",
 gold:"心有归处，即是故乡。",
 guide:["适度向外链接世界"]},
-
 "NNMN":{city:"威海",title:"海隅淡然者",col:"#5B7C99",cname:"苍山黛",
 q:"海风漫过，简单即是幸福。",
 x:"慢节奏，独处居多，冒险中间态，偏向精神体验。",
 hi:"松弛简单，与世无争",bug:"动力不足",match:"最搭 烟台型",
 gold:"简单生活，自有诗意。",
 guide:["给自己一点向上的动力"]},
-
 "MMNP":{city:"烟台",title:"海岸调和者",col:"#5C8A3A",cname:"山茶绿",
 q:"谋生谋生，感受亦不可辜负。",
 x:"节奏中等，社交内向，偏保守安稳，现实回报优先。",
 hi:"平衡有度，踏实生活",bug:"冲劲不足",match:"最搭 青岛型",
 gold:"踏实过日子，不忘看风景。",
 guide:["勇敢追求更高目标"]},
-
 "_default":{city:"山水中间型人格",title:"多元调和者",col:"#777777",cname:"中性灰",
 q:"「你的选择混合多元，没有走向极端。」",
 x:"你在各个特质之间处于中间地带，不偏向任何一端，兼容不同的生活方式，拥有很强的可塑性。",
@@ -609,8 +604,10 @@ $('pwd').addEventListener('input',()=>{
 });
 $('pwd').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnGate').click()});
 
-/* ============ 四选项答题逻辑 ============ */
+/* ============ 四选项答题逻辑 增加picking防连点丢失答案 ============ */
 let cur=0, answers=Array(QUESTIONS.length).fill(null);
+let picking = false;
+
 function renderQ(){
   console.log('renderQ运行，当前题号：', cur);
   try{
@@ -636,10 +633,13 @@ function renderQ(){
 }
 
 function pick(choice){
+  if(picking) return;
+  picking = true;
   answers[cur]=choice;
   save('cpt_progress',{cur,answers});
   renderQ();
   setTimeout(()=>{
+    picking = false;
     if(cur<QUESTIONS.length-1){
       cur++;
       save('cpt_progress',{cur,answers});
@@ -667,9 +667,9 @@ function getTier(score){
   else return "M";
 }
 
-// 接收一份answers副本，不依赖全局变量，彻底规避重置时序BUG
 function computeCode(localAnswers){
   const dimScore = [0,0,0,0];
+  console.log("【DEBUG】完整答卷数组：", localAnswers);
   for(let i=0;i<QUESTIONS.length;i++){
     const q = QUESTIONS[i];
     const ans = localAnswers[i];
@@ -678,6 +678,7 @@ function computeCode(localAnswers){
     else if(ans === "B") scoreAdd = q.sb;
     else if(ans === "C") scoreAdd = q.sc;
     else if(ans === "D") scoreAdd = q.sd;
+    console.log(`第${i+1}题 ans=${ans} scoreAdd=${scoreAdd}`);
     const dimIndex = q.d;
     if(dimIndex >=0 && dimIndex <=3){
       dimScore[dimIndex] += scoreAdd;
@@ -693,7 +694,6 @@ function computeCode(localAnswers){
 }
 
 function finish(){
-  // 复制当前答卷，先算编码，再重置状态，修复时序BUG
   const localAnswersCopy = [...answers];
   const code = computeCode(localAnswersCopy);
   resetTestState();
@@ -761,7 +761,7 @@ function copyLink(code){
   }
 }
 
-/* ============ 海报完整逻辑 ============ */
+/* ============ 【修复海报绘制BUG】 优化换行、徽章文字居中、布局边界 ============ */
 function openPoster(code){
   $('posterModal').classList.add('on');
   drawPoster(code);
@@ -787,13 +787,25 @@ $('btnSavePoster').onclick=async ()=>{
   }
 };
 
-function wrapLines(ctx,text,maxW){
-  const lines=[];let line='';
+function wrapLinesFixed(ctx,text,maxW){
+  const lines=[];
+  let line='';
   for(const ch of text){
-    if(ch==='\n'){lines.push(line);line='';continue}
-    if(ctx.measureText(line+ch).width>maxW){lines.push(line);line=ch}else line+=ch;
+    if(ch==='\n'){
+      lines.push(line);
+      line='';
+      continue;
+    }
+    const test = line + ch;
+    if(ctx.measureText(test).width > maxW){
+      if(line) lines.push(line);
+      line = ch;
+    }else{
+      line = test;
+    }
   }
-  if(line)lines.push(line);return lines;
+  if(line) lines.push(line);
+  return lines;
 }
 
 function drawPoster(code){
@@ -801,24 +813,44 @@ function drawPoster(code){
   if(!r) r = RESULTS["_default"];
   const cv=$('posterCanvas'),ctx=cv.getContext('2d');
   const W=1242,H=1656,M=96;
-  ctx.fillStyle='#F7F4EE';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#F7F4EE';
+  ctx.fillRect(0,0,W,H);
   const INK='#2B2B2B',GRAY='#9a917f';
   const SERIF='"Songti SC","STSong",SimSun,serif';
   const SANS='"PingFang SC","Microsoft YaHei",sans-serif';
-  ctx.fillStyle=GRAY;ctx.font=`26px ${SANS}`;
-  ctx.textAlign='left';ctx.fillText('你的性格最像哪座城？',M,120);
-  ctx.textAlign='right';ctx.font=`24px monospace`;
+
+  ctx.fillStyle=GRAY;
+  ctx.font=`26px ${SANS}`;
+  ctx.textAlign='left';
+  ctx.fillText('你的性格最像哪座城？',M,120);
+
+  ctx.textAlign='right';
+  ctx.font=`24px monospace`;
   ctx.fillText('编码 '+code,W-M,120);
-  ctx.textAlign='left';ctx.fillStyle=r.col;
-  ctx.font=`700 150px ${SERIF}`;
+
+  ctx.textAlign='left';
+  ctx.fillStyle=r.col;
+  ctx.font=`bold 150px ${SERIF}`;
   ctx.fillText(r.city+'型',M,330);
-  ctx.fillStyle=INK;ctx.font=`500 44px ${SANS}`;
+
+  ctx.fillStyle=INK;
+  ctx.font=`500 44px ${SANS}`;
   ctx.fillText(r.title||"",M,404);
-  ctx.strokeStyle=r.col;ctx.lineWidth=3;
-  ctx.beginPath();ctx.arc(W-M-90,300,86,0,Math.PI*2);ctx.stroke();
-  ctx.beginPath();ctx.arc(W-M-90,300,64,0,Math.PI*2);ctx.stroke();
-  ctx.fillStyle=r.col;ctx.font=`500 60px ${SERIF}`;
-  ctx.textAlign='center';ctx.fillText(r.city[0],W-M-90,322);
+
+  // 圆形徽章，文字垂直居中修复
+  const cx = W-M-90;
+  const cy = 300;
+  ctx.strokeStyle=r.col;
+  ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(cx,cy,86,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,64,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle=r.col;
+  ctx.font=`bold 60px ${SERIF}`;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(r.city[0], cx, cy);
+  ctx.textBaseline='alphabetic';
+
   ctx.textAlign='left';
   let y=440;
   ctx.font=`32px ${SANS}`;
@@ -826,13 +858,15 @@ function drawPoster(code){
   chipLab.forEach(lab=>{
     ctx.fillStyle=r.col;
     ctx.fillText(lab,M,y);
-    y +=46;
+    y +=48;
   });
-  y+=20;
+  y +=30;
+
   ctx.font=`36px ${SERIF}`;
-  const quoteLines = wrapLines(ctx,r.q,W-M*2);
+  const quoteLines = wrapLinesFixed(ctx,r.q,W-M*2);
   quoteLines.forEach(line=>{
-    ctx.fillText(line,M,y); y+=44;
+    ctx.fillText(line,M,y);
+    y +=48;
   });
 }
 
