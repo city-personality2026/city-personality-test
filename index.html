@@ -229,19 +229,19 @@ const answers = Array(QUESTIONS.length).fill(null);
 const wrap = document.getElementById("wrap");
 const resetBtn = document.getElementById("reset");
 
-//渲染题目
+//渲染题目【和你上一版渲染代码完全一致】
 QUESTIONS.forEach((q, idx)=>{
   const box = document.createElement("div");
   box.className = "question";
   box.innerHTML = `<div class="q-title">${idx+1}. ${q.q}</div>
     <label class="opt" data-idx="${idx}" data-ans="A">A. ${q.a}</label>
     <label class="opt" data-idx="${idx}" data-ans="B">B. ${q.b}</label>
-    <label class="opt" data-ans="C">C. ${q.c}</label>
+    <label class="opt" data-idx="${idx}" data-ans="C">C. ${q.c}</label>
     <label class="opt" data-idx="${idx}" data-ans="D">D. ${q.d}</label>`;
   wrap.appendChild(box);
 });
 
-//选项点击
+//选项点击选中逻辑
 document.querySelectorAll(".opt").forEach(el=>{
   el.onclick = ()=>{
     const i = el.dataset.idx;
@@ -252,7 +252,7 @@ document.querySelectorAll(".opt").forEach(el=>{
   }
 })
 
-//计算编码（核心均衡判定逻辑）
+//计算维度分数、编码
 function computeCode(){
   const dimScore = [0,0,0,0];
   for(let i=0;i<QUESTIONS.length;i++){
@@ -274,7 +274,6 @@ function computeCode(){
     if(dimScore[d] > 0){
       code += "0";
     }else{
-      //小于等于0，全部判定为1，均衡分配
       code += "1";
     }
   }
@@ -282,7 +281,7 @@ function computeCode(){
   return code;
 }
 
-//提交
+//提交按钮
 document.getElementById("submit").onclick = ()=>{
   if(answers.includes(null)){
     alert("请完成所有题目！");
@@ -296,7 +295,7 @@ document.getElementById("submit").onclick = ()=>{
   document.getElementById("cityDesc").innerText = city.desc;
 }
 
-//重置测试
+//重置按钮
 resetBtn.onclick = ()=>{
   answers.fill(null);
   document.querySelectorAll(".opt").forEach(o=>o.classList.remove("selected"));
