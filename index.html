@@ -316,7 +316,7 @@ guide:["允许自己偶尔不顾体面","设立精神享受预算","拒绝无意
 "PPNP":{city:"广州",title:"早茶实干家",col:"#D98E32",cname:"早茶琥珀",
 q:"「生意可以慢慢来，早茶必须趁热喝。」",
 x:"人脉是你的生活方式而非工具，擅长在热闹烟火中稳步拿到现实回报。",
-hi:"资源整合大师，人情练达",bug:"不好意思拒绝，边界感弱",match:"最搭 佛山型 · 互补 上海型",
+hi:"资源整合大师，人情练达",bug:"不好意思拒绝，边界感弱",match:"最搭 广州型 · 互补 上海型",
 gold:"生意慢慢来，早茶趁热喝。",
 guide:["练习说「我考虑下」","每月一次独处日","把人情记账，但别算太清"]},
 
@@ -513,7 +513,6 @@ function resetTestState(){
   cur = 0;
   answers = Array(QUESTIONS.length).fill(null);
   save('cpt_progress', {cur, answers});
-  // 清除页面选中高亮
   ["optA","optB","optC","optD"].forEach(id=>$(id).classList.remove('sel'));
 }
 
@@ -602,7 +601,7 @@ $('pwd').addEventListener('input',()=>{
 });
 $('pwd').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnGate').click()});
 
-/* ============ 答题逻辑：移除自动finish，到24题显示提交按钮 ============ */
+/* ============ 答题逻辑 ============ */
 let cur=0, answers=Array(QUESTIONS.length).fill(null);
 let picking = false;
 
@@ -624,7 +623,6 @@ function renderQ(){
     $('optC').classList.toggle('sel',answers[cur]==='C');
     $('optD').classList.toggle('sel',answers[cur]==='D');
     $('btnPrev').style.visibility=cur===0?'hidden':'visible';
-    // 第24题，展示提交按钮
     if(cur === QUESTIONS.length-1){
       $('btnSubmit').style.display="block";
     }else{
@@ -649,7 +647,6 @@ function pick(choice){
       save('cpt_progress',{cur,answers});
       renderQ();
     }
-    // 不再自动finish，等待用户点提交按钮
   },280);
 }
 
@@ -665,9 +662,7 @@ $('btnPrev').onclick=()=>{
   }
 };
 
-// 【手动提交结果按钮】
 $('btnSubmit').onclick = function(){
-  // 校验全部题目不为null
   const hasNull = answers.some(x=>x===null || x===undefined);
   if(hasNull){
     toast("存在未作答题目，请返回把所有题目选完");
@@ -683,6 +678,7 @@ function getTier(score){
   else return "M";
 }
 
+// ======【修复维度索引NaN问题】======
 function computeCode(localAnswers){
   const dimScore = [0,0,0,0];
   console.log("【DEBUG】完整答卷数组：", localAnswers);
@@ -694,11 +690,15 @@ function computeCode(localAnswers){
     else if(ans === "B") scoreAdd = q.sb;
     else if(ans === "C") scoreAdd = q.sc;
     else if(ans === "D") scoreAdd = q.sd;
+
     console.log(`第${i+1}题 ans=${ans} scoreAdd=${scoreAdd} 维度${q.d}`);
     const dimIndex = Number(q.d);
-    if(dimIndex >=0 && dimIndex <=3){
+
+    if(!isNaN(dimIndex) && dimIndex >=0 && dimIndex <=3){
       dimScore[dimIndex] = dimScore[dimIndex] + scoreAdd;
       console.log(` >> 维度${dimIndex} 现在分数：${dimScore[dimIndex]}`);
+    }else{
+      console.warn(`❌ 第${i+1}题维度索引异常 dimIndex=${dimIndex}`, q);
     }
   }
   console.log("【DEBUG】各维度分数：", dimScore);
@@ -779,7 +779,7 @@ function copyLink(code){
   }
 }
 
-/* ============ 海报绘制，增加边界保护 ============ */
+/* ============ 海报绘制，画布边界保护 ============ */
 function openPoster(code){
   $('posterModal').classList.add('on');
   drawPoster(code);
@@ -882,7 +882,7 @@ function drawPoster(code){
   ctx.font=`36px ${SERIF}`;
   const quoteLines = wrapLinesFixed(ctx,r.q,W-M*2);
   quoteLines.forEach(line=>{
-    if(y>H-M) return; //画布底部边界保护，防止文字溢出
+    if(y>H-M) return;
     ctx.fillText(line,M,y);
     y +=48;
   });
