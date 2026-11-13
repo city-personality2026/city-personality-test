@@ -308,14 +308,14 @@ $('btnSubmit').onclick = function(){
   finish();
 };
 
-// ========= 三档转换函数 P/M/N =========
+// ========= 【重点修复！！！】原始规则：>6 →P；<-6→N；其余M =========
 function getTier(score){
   if(score > 6) return "P";
   else if(score < -6) return "N";
   else return "M";
 }
 
-// 【兜底方案：通过题号i映射维度，不再读取qItem.d，彻底规避对象残缺NaN】
+// 题号i映射维度兜底，规避题目对象d字段损坏
 function computeCode(localAnswers){
   const dimScore = [0,0,0,0];
   console.log("【DEBUG】完整答卷数组：", localAnswers);
@@ -328,7 +328,6 @@ function computeCode(localAnswers){
     else if(ans === "C") scoreAdd = qItem.sc;
     else if(ans === "D") scoreAdd = qItem.sd;
 
-    // 题号下标映射维度
     let dimIndex;
     if(i>=0 && i<=5) dimIndex = 0;
     else if(i>=6 && i<=11) dimIndex = 1;
@@ -354,6 +353,7 @@ function finish(){
   const code = computeCode(localAnswersCopy);
   resetTestState();
   location.hash='r='+code;
+  // 完全走RESULTS查表，输出对应城市
   showResult(code,false);
 }
 
@@ -366,8 +366,8 @@ function tierLabel(ch,i){
 }
 
 function showResult(code,fromShare){
-  let r = RESULTS[code];
-  if(!r){r = RESULTS["_default"];}
+  // 直接查表，找不到就取_default兜底
+  let r = RESULTS[code] || RESULTS["_default"];
   const banner=$('friendBanner');
   if(fromShare){banner.style.display='block';banner.innerHTML=`你的朋友是【${r.city}型 · ${r.title||""}】<br>测测你是哪座城？`;}else banner.style.display='none';
   $('rCard').innerHTML=`
@@ -434,8 +434,7 @@ function wrapLinesFixed(ctx,text,maxW){
 }
 
 function drawPoster(code){
-  let r = RESULTS[code];
-  if(!r) r = RESULTS["_default"];
+  let r = RESULTS[code] || RESULTS["_default"];
   const cv=$('posterCanvas'),ctx=cv.getContext('2d');
   const W=1242,H=1656,M=96;
   ctx.fillStyle='#F7F4EE';ctx.fillRect(0,0,W,H);
