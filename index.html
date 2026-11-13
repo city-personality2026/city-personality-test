@@ -49,7 +49,9 @@ h1{font-family:"Songti SC","STSong",SimSun,serif;font-size:30px;text-align:cente
 .gold{background:#f2ecdd;border-radius:10px;padding:14px;font-size:15px;line-height:24px;margin-top:16px;font-weight:500}
 ul.guide{margin:4px 0 0 18px}
 ul.guide li{font-size:14px;line-height:26px;color:#4a453c}
-.banner{background:#2B2B2B;color:#F7F4EE;border-radius:12px;padding:14px 16px;font-size:14px;line-height:22px;margin-bottom:16px}
+/* 优化分享提示气泡，增加尖角 */
+.banner{background:#2B2B2B;color:#F7F4EE;border-radius:16px;padding:14px 16px;font-size:14px;line-height:22px;margin-bottom:24px;position:relative;}
+.banner::after{content:"";position:absolute;left:24px;bottom:-10px;border-width:10px 8px 0;border-style:solid;border-color:#2B2B2B transparent transparent;}
 .toast{position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);background:#2B2B2B;color:#F7F4EE;padding:12px 22px;border-radius:24px;font-size:14px;opacity:0;pointer-events:none;transition:all .3s;z-index:99;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%)}
 /* poster modal */
@@ -300,6 +302,12 @@ sa:3,sb:1,sc:-1,sd:-3}
 score > 6      → P 正向
 -6 ≤ score ≤6  → M 均衡中间
 score < -6     → N 负向
+全B每题+1，6题总和=6 → M；全C每题‑1总和‑6 → M；全A=18→P；全D=‑18→N
+【方案A改动】
+长沙：PMMN → PPMN (节奏P，社交P，风险M，价值N)
+珠海：PMPM → NMPM (节奏N，社交M，风险P，价值M)
+济南：MPPP → MPMP (节奏M，社交P，风险M，价值P)
+旧编码 PMMN / PMPM / MPPP 删除，命中会走兜底_default
 */
 const RESULTS = {
 "PPPP":{city:"深圳",title:"湾区永动机",col:"#0B5FFF",cname:"科创蓝",
@@ -636,6 +644,7 @@ function pick(choice){
   if(picking) return;
   picking = true;
   answers[cur]=choice;
+  // ✅无论是否最后一题，选中立刻保存，修复最后一题不持久化BUG
   save('cpt_progress',{cur,answers});
   renderQ();
   setTimeout(()=>{
@@ -644,7 +653,9 @@ function pick(choice){
       cur++;
       save('cpt_progress',{cur,answers});
       renderQ();
-    }else finish();
+    }else {
+      finish();
+    }
   },280);
 }
 
@@ -694,7 +705,9 @@ function computeCode(localAnswers){
 }
 
 function finish(){
+  // ✅先拷贝答卷副本，执行计算，计算完再重置，杜绝数组被清空BUG
   const localAnswersCopy = [...answers];
+  console.log("【FINAL 最终答卷】", localAnswersCopy);
   const code = computeCode(localAnswersCopy);
   resetTestState();
   location.hash='r='+code;
@@ -761,7 +774,7 @@ function copyLink(code){
   }
 }
 
-/* ============ 【修复海报绘制BUG】 优化换行、徽章文字居中、布局边界 ============ */
+/* ============ 【修复海报绘制BUG】 优化换行、徽章文字垂直居中、布局边界 ============ */
 function openPoster(code){
   $('posterModal').classList.add('on');
   drawPoster(code);
