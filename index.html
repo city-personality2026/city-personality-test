@@ -1,4 +1,4 @@
-<!--v20261113‑fix‑final 保留全部原有UI与业务，仅修复维度下标越界崩溃bug -->
+<!--v20261113‑fix‑score 修复选项无论怎么选结果固定同一个城市BUG -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -418,23 +418,30 @@ $('btnPrev').onclick=()=>{
   }
 };
 
-// 四选项计分，输出4位01编码，兼容原有16城市结果
+// ==========【修复！重写计分函数，解决无论选什么结果都同一个城市】==========
 function computeCode(){
-  const dimScore=[0,0,0,0];
+  const dimScore = [0,0,0,0];
   for(let i=0;i<QUESTIONS.length;i++){
-    const q=QUESTIONS[i];
-    const ch=answers[i];
-    let s=0;
-    if(ch==='A') s=q.sa;
-    else if(ch==='B') s=q.sb;
-    else if(ch==='C') s=q.sc;
-    else if(ch==='D') s=q.sd;
-    dimScore[q.d] += s;
+    const q = QUESTIONS[i];
+    const ans = answers[i];
+    let scoreAdd = 0;
+    if(ans === "A") scoreAdd = q.sa;
+    else if(ans === "B") scoreAdd = q.sb;
+    else if(ans === "C") scoreAdd = q.sc;
+    else if(ans === "D") scoreAdd = q.sd;
+    // 只加到该题目所属维度
+    const dimIndex = q.d;
+    if(dimIndex >=0 && dimIndex <=3){
+      dimScore[dimIndex] += scoreAdd;
+    }
   }
-  let code='';
+  console.log("各维度分数：", dimScore);
+  let code = "";
   for(let d=0;d<4;d++){
-    code += dimScore[d] >= 0 ? '0':'1';
+    // >=0 →0，小于0→1
+    code += dimScore[d] >= 0 ? "0" : "1";
   }
+  console.log("输出4位编码：", code);
   return code;
 }
 
